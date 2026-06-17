@@ -1,0 +1,97 @@
+import { Navigate, Route, Routes } from "react-router-dom";
+import { ErrorBoundary } from "./components/Common/ErrorBoundary";
+import { Footer } from "./components/Common/Footer";
+import { Header } from "./components/Common/Header";
+import { Sidebar } from "./components/Common/Sidebar";
+import { ProtectedRoute } from "./components/Auth/ProtectedRoute";
+import AlbumDetail from "./pages/AlbumDetail";
+import Explore from "./pages/Explore";
+import Gallery from "./pages/Gallery";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import MyAlbums from "./pages/MyAlbums";
+import MyPhotos from "./pages/MyPhotos";
+import NotFound from "./pages/NotFound";
+import PhotoDetail from "./pages/PhotoDetail";
+import Register from "./pages/Register";
+import Search from "./pages/Search";
+import Settings from "./pages/Settings";
+import Upload from "./pages/Upload";
+import UserProfile from "./pages/UserProfile";
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen bg-mist text-ink">
+        <Header />
+        <div className="mx-auto flex w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
+          <Sidebar />
+          <main className="min-w-0 flex-1">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/photos/:photoId" element={<PhotoDetail />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/users/:userId" element={<UserProfile />} />
+              <Route path="/users/:userId/photos" element={<Gallery title="Public Photos" />} />
+              <Route path="/albums/:albumId" element={<AlbumDetail />} />
+              <Route
+                path="/upload"
+                element={
+                  <ProtectedRoute>
+                    <Upload />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/gallery"
+                element={
+                  <ProtectedRoute>
+                    <Gallery title="My Gallery" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/albums"
+                element={
+                  <ProtectedRoute>
+                    <MyAlbums />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/albums/new"
+                element={
+                  <ProtectedRoute>
+                    <MyAlbums showCreateForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my/photos"
+                element={
+                  <ProtectedRoute>
+                    <MyPhotos />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/404" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
+            </Routes>
+          </main>
+        </div>
+        <Footer />
+      </div>
+    </ErrorBoundary>
+  );
+}
