@@ -82,7 +82,7 @@ Required server `.env` values:
 - `JWT_SECRET`: strong signing secret for access tokens
 - `JWT_EXPIRY`: token lifetime, for example `7d`
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
-- `CORS_ORIGIN`: Vite client origin, usually `http://localhost:5173`
+- `CORS_ORIGIN`: comma-separated Vite client origins, usually `http://localhost:5173,http://127.0.0.1:5173`
 
 Run the apps:
 

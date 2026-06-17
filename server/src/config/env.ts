@@ -11,10 +11,30 @@ function readNumber(name: string, fallback: number): number {
   return Number.isNaN(parsedValue) ? fallback : parsedValue;
 }
 
+function readList(name: string, fallback: string[]): string[] {
+  const rawValue = process.env[name];
+
+  if (!rawValue) {
+    return fallback;
+  }
+
+  return rawValue
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+const defaultCorsOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5174"
+];
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   port: readNumber("PORT", 5000),
-  corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+  corsOrigins: readList("CORS_ORIGIN", defaultCorsOrigins),
   databaseUrl: process.env.DATABASE_URL ?? "postgresql://user:password@localhost:5432/framehub",
   jwtSecret: process.env.JWT_SECRET ?? "development-only-secret",
   jwtExpiry: process.env.JWT_EXPIRY ?? "7d",

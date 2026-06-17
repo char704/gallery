@@ -1,6 +1,8 @@
 import type { UploadApiResponse } from "cloudinary";
+import { isProduction } from "../config/env";
 import { cloudinary } from "../config/cloudinary";
 import { AppError } from "../utils/errorHandler";
+import { logger } from "../utils/logger";
 
 export interface UploadedImage {
   publicId: string;
@@ -20,6 +22,36 @@ function sanitizePublicId(fileName: string): string {
     .slice(0, 80);
 }
 
+function getCloudinaryErrorInfo(error: unknown): { message: string; httpCode?: number } {
+  if (error instanceof Error) {
+    return {
+      message: error.message
+    };
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const record = error as {
+      message?: unknown;
+      http_code?: unknown;
+      error?: {
+        message?: unknown;
+        http_code?: unknown;
+      };
+    };
+    const message = record.error?.message ?? record.message;
+    const httpCode = record.error?.http_code ?? record.http_code;
+
+    return {
+      message: typeof message === "string" ? message : JSON.stringify(error),
+      httpCode: typeof httpCode === "number" ? httpCode : undefined
+    };
+  }
+
+  return {
+    message: String(error)
+  };
+}
+
 export const cloudinaryService = {
   async uploadImage(fileBuffer: Buffer, fileName: string): Promise<UploadedImage> {
     return new Promise((resolve, reject) => {
@@ -33,7 +65,19 @@ export const cloudinaryService = {
         },
         (error, result?: UploadApiResponse) => {
           if (error) {
-            reject(new AppError("Image upload failed.", 502, "CLOUDINARY_UPLOAD_FAILED"));
+            const errorInfo = getCloudinaryErrorInfo(error);
+
+            logger.error("Cloudinary upload failed", {
+              message: errorInfo.message,
+              httpCode: errorInfo.httpCode
+            });
+            reject(
+              new AppError(
+                isProduction ? "Image upload failed." : `Image upload failed: ${errorInfo.message}`,
+                502,
+                "CLOUDINARY_UPLOAD_FAILED"
+              )
+            );
             return;
           }
 
