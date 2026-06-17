@@ -20,5 +20,11 @@ export const authService = {
     return apiRequest<User>("/auth/me", {
       token
     });
+  },
+
+  logout(): Promise<{ ok: boolean }> {
+    return apiRequest<{ ok: boolean }>("/auth/logout", {
+      method: "POST"
+    });
   }
 };

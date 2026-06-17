@@ -14,3 +14,9 @@ export const photoMetadataValidator = [
   body("visibility").optional().isIn(["PUBLIC", "PRIVATE", "UNLISTED"]),
   body("tags").optional().isArray({ max: 20 })
 ];
+
+export const photoUploadValidator = [
+  body("title").isString().trim().isLength({ min: 1, max: 120 }),
+  body("description").optional().isString().trim().isLength({ max: 1000 }),
+  body("visibility").optional().isIn(["PUBLIC", "PRIVATE", "UNLISTED"])
+];

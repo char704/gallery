@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useRegister } from "../../hooks/useAuth";
 import { registerSchema } from "../../utils/validators";
@@ -9,16 +10,30 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const registerUser = useRegister();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors }
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema)
   });
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit((values) => registerUser.mutate(values))}>
+    <form
+      className="space-y-4"
+      onSubmit={handleSubmit(async (values) => {
+        try {
+          await registerUser.mutateAsync(values);
+          navigate("/gallery", { replace: true });
+        } catch (error) {
+          setError("root", {
+            message: error instanceof Error ? error.message : "Registration failed."
+          });
+        }
+      })}
+    >
       <label className="block">
         <span className="text-sm font-medium text-slate-700">Name</span>
         <input
@@ -56,8 +71,9 @@ export function RegisterForm() {
         disabled={registerUser.isPending}
       >
         <UserPlus size={18} />
-        Create account
+        {registerUser.isPending ? "Creating..." : "Create account"}
       </button>
+      {errors.root ? <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{errors.root.message}</p> : null}
     </form>
   );
 }

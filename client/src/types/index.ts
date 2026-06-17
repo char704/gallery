@@ -16,8 +16,10 @@ export type {
 export type {
   Album,
   Photo,
+  PhotoListResult,
   PhotoQueryParams,
   SearchQueryParams,
   Tag,
+  UploadPhotoPayload,
   Visibility
 } from "./photo.types";

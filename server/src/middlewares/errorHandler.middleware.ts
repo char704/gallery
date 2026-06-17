@@ -13,6 +13,12 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     return;
   }
 
+  if (error instanceof Error && error.name === "MulterError") {
+    const message = error.message || "File upload failed.";
+    res.status(400).json(errorResponse("UPLOAD_ERROR", message));
+    return;
+  }
+
   const message = isProduction ? "Unexpected server error." : error instanceof Error ? error.message : "Unknown error.";
   res.status(500).json(errorResponse("INTERNAL_SERVER_ERROR", message));
 };

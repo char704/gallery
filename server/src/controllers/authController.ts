@@ -1,17 +1,57 @@
 import type { RequestHandler } from "express";
+import { authService } from "../services/auth.service";
 import { successResponse } from "../utils/responseFormatter";
 
 export const authController = {
-  register: ((_req, res) => {
-    res.status(501).json(successResponse({ implemented: false }, "Registration scaffold ready."));
+  register: (async (req, res, next) => {
+    try {
+      const { email, password, name } = req.body as {
+        email: string;
+        password: string;
+        name: string;
+      };
+      const user = await authService.createUser(email, password, name);
+      const token = authService.generateAccessToken(user.id, user.email, user.role);
+
+      res.status(201).json(successResponse({ user, token }, "Registration successful."));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
-  login: ((_req, res) => {
-    res.status(501).json(successResponse({ implemented: false }, "Login scaffold ready."));
+  login: (async (req, res, next) => {
+    try {
+      const { email, password } = req.body as {
+        email: string;
+        password: string;
+      };
+      const user = await authService.authenticateUser(email, password);
+      const token = authService.generateAccessToken(user.id, user.email, user.role);
+
+      res.json(successResponse({ user, token }, "Login successful."));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
-  me: ((req, res) => {
-    res.json(successResponse({ user: req.user ?? null }));
+  me: (async (req, res, next) => {
+    try {
+      if (!req.user) {
+        res.status(401).json({
+          success: false,
+          error: {
+            code: "UNAUTHORIZED",
+            message: "Unauthorized - No token provided."
+          }
+        });
+        return;
+      }
+
+      const user = await authService.getUserById(req.user.id);
+      res.json(successResponse(user));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
   logout: ((_req, res) => {

@@ -1,5 +1,6 @@
 import { Camera, Menu, Search, Upload } from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
 import { APP_NAME } from "../../utils/constants";
 
@@ -11,6 +12,14 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 
 export function Header() {
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+  const navigate = useNavigate();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const clearSession = useAuthStore((state) => state.clearSession);
+
+  function handleLogout() {
+    clearSession();
+    navigate("/");
+  }
 
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -57,6 +66,22 @@ export function Header() {
             <Upload size={16} />
             <span className="hidden sm:inline">Upload</span>
           </Link>
+          {isAuthenticated ? (
+            <button
+              className="focus-ring rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              type="button"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              className="focus-ring rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              to="/login"
+            >
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </header>

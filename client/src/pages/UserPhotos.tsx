@@ -1,11 +1,18 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { LoadingSpinner } from "../components/Common/LoadingSpinner";
 import { PhotoGrid } from "../components/Gallery/PhotoGrid";
-import { usePublicPhotos } from "../hooks/usePhotos";
+import { photoService } from "../services/photo.service";
 
-export default function Explore() {
+export default function UserPhotos() {
+  const { userId } = useParams();
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = usePublicPhotos(page, 12);
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["photos", "user", userId, page],
+    queryFn: () => photoService.getPublicUserPhotos(userId ?? "", page, 12),
+    enabled: Boolean(userId)
+  });
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -14,7 +21,7 @@ export default function Explore() {
   if (isError) {
     return (
       <section className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-700">
-        {error instanceof Error ? error.message : "Could not load public photos."}
+        {error instanceof Error ? error.message : "Could not load user photos."}
       </section>
     );
   }
@@ -24,8 +31,7 @@ export default function Explore() {
 
   return (
     <section>
-      <h1 className="text-2xl font-semibold text-ink">Explore</h1>
-      <p className="mt-2 text-slate-600">Public photos from the FrameHub community.</p>
+      <h1 className="text-2xl font-semibold text-ink">Public Photos</h1>
       <div className="mt-5">
         <PhotoGrid photos={photos} />
         {photos.length > 0 ? (

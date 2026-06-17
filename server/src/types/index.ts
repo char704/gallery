@@ -36,6 +36,12 @@ export interface AuthenticatedUser {
   role: UserRole;
 }
 
+export interface JwtUserPayload {
+  userId: string;
+  email: string;
+  role?: UserRole;
+}
+
 export interface HealthCheckPayload {
   status: "ok";
   uptime: number;

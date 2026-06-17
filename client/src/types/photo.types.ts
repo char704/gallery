@@ -23,6 +23,10 @@ export interface Photo {
   userId: string;
   user?: Pick<User, "id" | "name" | "avatarUrl">;
   tags?: Tag[];
+  _count?: {
+    likes: number;
+    comments: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -51,4 +55,18 @@ export interface PhotoQueryParams {
 export interface SearchQueryParams extends PhotoQueryParams {
   q?: string;
   userId?: string;
+}
+
+export interface PhotoListResult {
+  photos: Photo[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+export interface UploadPhotoPayload {
+  file: File;
+  title: string;
+  description?: string;
+  visibility: Visibility;
 }

@@ -18,10 +18,23 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
   token?: string;
 }
 
+function buildRequestBody(body: unknown): BodyInit | undefined {
+  if (body === undefined) {
+    return undefined;
+  }
+
+  if (body instanceof FormData) {
+    return body as FormData;
+  }
+
+  return JSON.stringify(body);
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
+  const isFormData = options.body instanceof FormData;
 
-  if (options.body !== undefined) {
+  if (options.body !== undefined && !isFormData) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -29,10 +42,12 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers.set("Authorization", `Bearer ${options.token}`);
   }
 
+  const requestBody = buildRequestBody(options.body);
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body)
+    body: requestBody
   });
 
   const payload = (await response.json()) as ApiResponse<T>;
