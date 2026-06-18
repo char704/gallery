@@ -3,10 +3,9 @@ import { PhotoCard } from "./PhotoCard";
 
 interface PhotoGridProps {
   photos: Photo[];
-  onSelect?: (photo: Photo) => void;
 }
 
-export function PhotoGrid({ photos, onSelect }: PhotoGridProps) {
+export function PhotoGrid({ photos }: PhotoGridProps) {
   if (photos.length === 0) {
     return (
       <section className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
@@ -19,7 +18,7 @@ export function PhotoGrid({ photos, onSelect }: PhotoGridProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {photos.map((photo) => (
-        <PhotoCard key={photo.id} photo={photo} onSelect={onSelect} />
+        <PhotoCard key={photo.id} photo={photo} />
       ))}
     </div>
   );
