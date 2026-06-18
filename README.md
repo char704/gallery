@@ -1,9 +1,43 @@
 # FrameHub
 
-FrameHub is a full-stack photo gallery platform with working authentication and photo upload/gallery vertical slices:
+FrameHub is a production-ready full-stack photo gallery platform for uploading, organizing, and sharing photos.
 
-- `client/`: React 18, Vite, Tailwind CSS, React Router, TanStack Query, Zustand
-- `server/`: Node.js 20, Express, Prisma, PostgreSQL, JWT auth, Cloudinary uploads
+- Live app: https://gallery-ebon-six.vercel.app/
+- Backend API: https://gallery-39ia.onrender.com/
+- Health check: https://gallery-39ia.onrender.com/health
+- Repository: https://github.com/char704/gallery
+
+## Tech Stack
+
+- Client: React 18, Vite, TypeScript, Tailwind CSS, React Router, TanStack Query, Zustand
+- Server: Node.js 20, Express, TypeScript, Prisma, PostgreSQL, JWT auth
+- Storage: Cloudinary image uploads with UUID public IDs under per-user folders
+- Testing: Vitest, React Testing Library, Supertest-ready integration tests
+- Deployment: Vercel frontend, Render backend
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Browser["Browser"] --> Client["React app on Vercel"]
+  Client -->|"HTTPS /api"| Server["Express API on Render"]
+  Server -->|"Prisma"| DB["PostgreSQL"]
+  Server -->|"Upload/delete images"| Cloudinary["Cloudinary"]
+```
+
+## Working Features
+
+- Register and login with email/password validation and bcrypt password hashing.
+- JWT-based protected routes with persisted client sessions.
+- `/api/auth/me` session hydration after browser refresh.
+- Authenticated photo upload to Cloudinary with MIME/signature validation.
+- UUID-based Cloudinary public IDs in `framehub/{userId}/{uuid}` to prevent collisions.
+- Photo metadata persisted in PostgreSQL through Prisma.
+- Personal gallery with pagination at `/gallery`.
+- Public gallery with pagination at `/explore`.
+- Home page recent photos loaded from the live API.
+- Photo detail page with owner-only edit/delete actions and delete confirmation.
+- Integration tests for auth, photo authorization, and privacy behavior.
 
 ## Project Structure
 
@@ -12,7 +46,6 @@ framehub/
 |-- client/
 |   |-- public/
 |   |-- src/
-|   |   |-- assets/
 |   |   |-- components/
 |   |   |-- hooks/
 |   |   |-- pages/
@@ -20,19 +53,16 @@ framehub/
 |   |   |-- store/
 |   |   |-- test/
 |   |   |-- types/
-|   |   |-- utils/
-|   |   |-- App.tsx
-|   |   |-- index.css
-|   |   `-- main.tsx
+|   |   `-- utils/
 |   |-- .env.example
 |   |-- package.json
-|   |-- tsconfig.json
-|   |-- tailwind.config.js
+|   |-- vercel.json
 |   `-- vite.config.ts
 |-- server/
 |   |-- prisma/
 |   |   `-- schema.prisma
 |   |-- src/
+|   |   |-- __tests__/
 |   |   |-- config/
 |   |   |-- controllers/
 |   |   |-- middlewares/
@@ -40,16 +70,15 @@ framehub/
 |   |   |-- services/
 |   |   |-- types/
 |   |   |-- utils/
-|   |   |-- validators/
-|   |   |-- app.ts
-|   |   `-- server.ts
+|   |   `-- validators/
 |   |-- .env.example
 |   |-- package.json
 |   `-- tsconfig.json
+|-- DEPLOYMENT.md
 `-- README.md
 ```
 
-## Getting Started
+## Local Setup
 
 Install dependencies in each app:
 
@@ -68,21 +97,13 @@ cp client/.env.example client/.env
 cp server/.env.example server/.env
 ```
 
-Generate Prisma Client and prepare the database:
+Generate Prisma Client and prepare the local database:
 
 ```bash
 cd server
 npm run prisma:generate
 npm run prisma:migrate
 ```
-
-Required server `.env` values:
-
-- `DATABASE_URL`: PostgreSQL connection string
-- `JWT_SECRET`: strong signing secret for access tokens
-- `JWT_EXPIRY`: token lifetime, for example `7d`
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
-- `CORS_ORIGIN`: comma-separated Vite client origins, usually `http://localhost:5173,http://127.0.0.1:5173`
 
 Run the apps:
 
@@ -99,16 +120,34 @@ Default local URLs:
 - Client: http://localhost:5173
 - Server health check: http://localhost:5000/health
 
-## Working Features
+## Environment Variables
 
-- Register and login with email/password validation and bcrypt password hashing.
-- JWT-based protected routes with persisted client sessions.
-- `/auth/me` session hydration after browser refresh.
-- Authenticated photo upload to Cloudinary with MIME/signature validation.
-- Photo metadata persisted in PostgreSQL through Prisma.
-- Personal gallery with pagination at `/gallery`.
-- Public gallery with pagination at `/explore`.
-- Photo detail page with owner-only edit/delete actions.
+Client:
+
+```env
+VITE_API_BASE_URL=https://gallery-39ia.onrender.com/api
+VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+```
+
+Server:
+
+```env
+DATABASE_URL=postgresql://...
+JWT_SECRET=use_a_strong_32_plus_character_secret
+JWT_EXPIRY=7d
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+NODE_ENV=production
+PORT=5000
+CORS_ORIGIN=https://gallery-ebon-six.vercel.app
+MAX_FILE_SIZE=5242880
+MAX_FILES_PER_REQUEST=10
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+```
+
+Do not commit real `.env` files. Use the `.env.example` files for public documentation only.
 
 ## API Overview
 
@@ -131,16 +170,31 @@ Photos:
 
 ## Verification
 
-Run these checks in both `client/` and `server/`:
+Run these checks before pushing:
 
 ```bash
+cd client
+npm run typecheck
+npm test
+npm run build
+
+cd ../server
 npm run typecheck
 npm test
 npm run build
 ```
 
-## Notes
+Production smoke checks:
 
-- Albums, search, and community features remain scaffolded for later phases.
-- Prisma is server-only. The client uses service modules for API access.
-- Docker, CI, and deployment files are intentionally deferred from this initial scaffold.
+```bash
+curl https://gallery-39ia.onrender.com/health
+curl -I https://gallery-ebon-six.vercel.app/login
+```
+
+## Demo Account
+
+Use the live registration flow to create a disposable demo account. Shared demo passwords are intentionally not committed to source; for a portfolio walkthrough, keep demo credentials in a private note or reset them before sharing.
+
+## Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the Render and Vercel configuration checklist.
