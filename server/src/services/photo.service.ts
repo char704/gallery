@@ -6,6 +6,7 @@ import { cloudinaryService } from "./cloudinary.service";
 
 const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 60;
+type PhotoSort = "latest" | "oldest" | "popular";
 
 export interface PhotoListResult {
   photos: Array<
@@ -39,6 +40,30 @@ function normalizePagination(page = 1, limit = DEFAULT_LIMIT) {
 
 function visibilityOrDefault(value: unknown): Visibility {
   return value === "PUBLIC" || value === "UNLISTED" || value === "PRIVATE" ? value : "PRIVATE";
+}
+
+function sortOrDefault(value: unknown): PhotoSort {
+  return value === "oldest" || value === "popular" || value === "latest" ? value : "latest";
+}
+
+function toPublicOrderBy(sort: PhotoSort): Prisma.PhotoOrderByWithRelationInput {
+  if (sort === "oldest") {
+    return {
+      createdAt: "asc"
+    };
+  }
+
+  if (sort === "popular") {
+    return {
+      likes: {
+        _count: "desc"
+      }
+    };
+  }
+
+  return {
+    createdAt: "desc"
+  };
 }
 
 const photoInclude = {
@@ -130,20 +155,46 @@ export const photoService = {
     };
   },
 
-  async getPublicPhotos(page = 1, limit = DEFAULT_LIMIT): Promise<PhotoListResult> {
+  async getPublicPhotos(
+    page = 1,
+    limit = DEFAULT_LIMIT,
+    options: {
+      tag?: string;
+      sort?: string;
+    } = {}
+  ): Promise<PhotoListResult> {
     const pagination = normalizePagination(page, limit);
     const where: Prisma.PhotoWhereInput = {
       visibility: "PUBLIC"
     };
+    const tag = options.tag?.trim();
+
+    if (tag) {
+      where.tags = {
+        some: {
+          tag: {
+            OR: [
+              {
+                slug: tag.toLowerCase()
+              },
+              {
+                name: {
+                  equals: tag,
+                  mode: "insensitive"
+                }
+              }
+            ]
+          }
+        }
+      };
+    }
 
     const [photos, total] = await Promise.all([
       prisma.photo.findMany({
         where,
         skip: pagination.skip,
         take: pagination.limit,
-        orderBy: {
-          createdAt: "desc"
-        },
+        orderBy: toPublicOrderBy(sortOrDefault(options.sort)),
         include: photoInclude
       }),
       prisma.photo.count({ where })
@@ -271,5 +322,6 @@ export const photoService = {
     return deletedPhoto;
   },
 
-  parseVisibility: visibilityOrDefault
+  parseVisibility: visibilityOrDefault,
+  parseSort: sortOrDefault
 };

@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { LoadingSpinner } from "../components/Common/LoadingSpinner";
+import { PhotoFilters } from "../components/Gallery/PhotoFilters";
 import { PhotoGrid } from "../components/Gallery/PhotoGrid";
 import { usePublicPhotos } from "../hooks/usePhotos";
+import type { PhotoQueryParams } from "../types";
 
 export default function Explore() {
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError, error } = usePublicPhotos(page, 12);
+  const [tag, setTag] = useState("");
+  const [sort, setSort] = useState<NonNullable<PhotoQueryParams["sort"]>>("latest");
+  const { data, isLoading, isError, error } = usePublicPhotos(page, 12, {
+    tag: tag.trim() || undefined,
+    sort
+  });
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -26,6 +33,20 @@ export default function Explore() {
     <section>
       <h1 className="text-2xl font-semibold text-ink">Explore</h1>
       <p className="mt-2 text-slate-600">Public photos from the FrameHub community.</p>
+      <div className="mt-5">
+        <PhotoFilters
+          tag={tag}
+          sort={sort}
+          onTagChange={(value) => {
+            setTag(value);
+            setPage(1);
+          }}
+          onSortChange={(value) => {
+            setSort(value);
+            setPage(1);
+          }}
+        />
+      </div>
       <div className="mt-5">
         <PhotoGrid photos={photos} />
         {photos.length > 0 ? (

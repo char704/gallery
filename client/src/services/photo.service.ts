@@ -38,8 +38,8 @@ export const photoService = {
     });
   },
 
-  getPublicPhotos(page = 1, limit = 12): Promise<PhotoListResult> {
-    return apiRequest<PhotoListResult>(`/photos${toQueryString({ page, limit })}`);
+  getPublicPhotos(page = 1, limit = 12, params: Omit<PhotoQueryParams, "page" | "limit" | "visibility"> = {}): Promise<PhotoListResult> {
+    return apiRequest<PhotoListResult>(`/photos${toQueryString({ page, limit, ...params })}`);
   },
 
   getUserPhotos(page = 1, limit = 12, token?: string | null): Promise<PhotoListResult> {

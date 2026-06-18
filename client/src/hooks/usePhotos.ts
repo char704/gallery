@@ -30,9 +30,9 @@ export function useMyPhotos(page = 1, limit = 12) {
   });
 }
 
-export function usePublicPhotos(page = 1, limit = 12) {
+export function usePublicPhotos(page = 1, limit = 12, params: Omit<PhotoQueryParams, "page" | "limit" | "visibility"> = {}) {
   return useQuery({
-    queryKey: ["photos", "public", page, limit],
-    queryFn: () => photoService.getPublicPhotos(page, limit)
+    queryKey: ["photos", "public", page, limit, params],
+    queryFn: () => photoService.getPublicPhotos(page, limit, params)
   });
 }

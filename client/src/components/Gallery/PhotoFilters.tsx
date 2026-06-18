@@ -1,18 +1,18 @@
 import { SlidersHorizontal } from "lucide-react";
-import type { Visibility } from "../../types";
+import type { PhotoQueryParams } from "../../types";
 
 interface PhotoFiltersProps {
   tag: string;
-  visibility?: Visibility;
+  sort: NonNullable<PhotoQueryParams["sort"]>;
   onTagChange: (tag: string) => void;
-  onVisibilityChange: (visibility: Visibility | undefined) => void;
+  onSortChange: (sort: NonNullable<PhotoQueryParams["sort"]>) => void;
 }
 
 export function PhotoFilters({
   tag,
-  visibility,
+  sort,
   onTagChange,
-  onVisibilityChange
+  onSortChange
 }: PhotoFiltersProps) {
   return (
     <form className="mb-5 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row sm:items-center">
@@ -28,16 +28,14 @@ export function PhotoFilters({
       />
       <select
         className="focus-ring rounded-lg border border-slate-300 px-3 py-2"
-        value={visibility ?? ""}
+        value={sort}
         onChange={(event) => {
-          const value = event.target.value as Visibility | "";
-          onVisibilityChange(value === "" ? undefined : value);
+          onSortChange(event.target.value as NonNullable<PhotoQueryParams["sort"]>);
         }}
       >
-        <option value="">All visibility</option>
-        <option value="PUBLIC">Public</option>
-        <option value="PRIVATE">Private</option>
-        <option value="UNLISTED">Unlisted</option>
+        <option value="latest">Latest</option>
+        <option value="oldest">Oldest</option>
+        <option value="popular">Popular</option>
       </select>
     </form>
   );

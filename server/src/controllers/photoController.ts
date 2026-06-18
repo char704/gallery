@@ -13,7 +13,10 @@ export const photoController = {
     try {
       const page = parsePage(req.query.page, 1);
       const limit = parsePage(req.query.limit, 12);
-      const result = await photoService.getPublicPhotos(page, limit);
+      const result = await photoService.getPublicPhotos(page, limit, {
+        tag: typeof req.query.tag === "string" ? req.query.tag : undefined,
+        sort: typeof req.query.sort === "string" ? req.query.sort : undefined
+      });
 
       res.json(successResponse(result));
     } catch (error) {
