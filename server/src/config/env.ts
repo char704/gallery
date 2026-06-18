@@ -33,7 +33,7 @@ const rawEnvSchema = z.object({
   PORT: z.coerce.number().int().min(1024).max(65535).default(5000),
   CORS_ORIGIN: z
     .string()
-    .default("http://localhost:5173")
+    .default(currentNodeEnv === "production" ? "" : "http://localhost:5173")
     .transform((value) =>
       value
         .split(",")
@@ -73,6 +73,7 @@ function validateProduction(rawEnv: RawEnv): void {
 
   const errors: string[] = [];
   const weakSecretFragments = ["development", "password", "secret", "admin", "123456", "test"];
+  const corsOriginRaw = process.env.CORS_ORIGIN?.trim();
 
   if (rawEnv.JWT_SECRET === "development-only-secret") {
     errors.push("JWT_SECRET cannot use the development placeholder in production");
@@ -90,7 +91,9 @@ function validateProduction(rawEnv: RawEnv): void {
     errors.push("DATABASE_URL cannot point to localhost in production");
   }
 
-  if (rawEnv.CORS_ORIGIN.some((origin) => origin.includes("localhost") || origin.includes("127.0.0.1"))) {
+  if (!corsOriginRaw) {
+    errors.push("CORS_ORIGIN must be set to the deployed frontend origin in production");
+  } else if (rawEnv.CORS_ORIGIN.some((origin) => origin.includes("localhost") || origin.includes("127.0.0.1"))) {
     errors.push("CORS_ORIGIN cannot include localhost in production");
   }
 
