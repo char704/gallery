@@ -1,25 +1,31 @@
 import { Eye, Heart, Lock, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { Photo } from "../../types";
+import type { Photo, Tag } from "../../types";
 
 interface PhotoCardProps {
   photo: Photo;
+  layout?: "grid" | "masonry";
 }
 
-export function PhotoCard({ photo }: PhotoCardProps) {
+export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
   const VisibilityIcon = photo.visibility === "PUBLIC" ? Eye : Lock;
+  const isMasonry = layout === "masonry";
+  const tags =
+    photo.tags?.map((photoTag) => ("tag" in photoTag ? photoTag.tag : (photoTag as unknown as Tag))) ?? [];
 
   return (
-    <article className="group relative overflow-hidden rounded-xl bg-ink shadow-soft transition duration-300 hover:-translate-y-0.5 hover:shadow-gallery">
+    <article className="group relative overflow-hidden rounded-xl bg-ink shadow-soft transition duration-300 motion-safe:hover:-translate-y-0.5 hover:shadow-gallery">
       <Link
-        className="focus-ring block aspect-[4/3] w-full overflow-hidden"
+        className={`focus-ring block w-full overflow-hidden ${isMasonry ? "" : "aspect-[4/3]"}`}
         to={`/photos/${photo.id}`}
         aria-label={`Open ${photo.title}`}
       >
         <img
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          src={photo.thumbnailUrl}
+          className={`${isMasonry ? "h-auto" : "h-full"} w-full object-cover transition duration-500 motion-safe:group-hover:scale-105`}
+          src={isMasonry ? photo.imageUrl : photo.thumbnailUrl}
           alt={photo.title}
+          width={photo.width}
+          height={photo.height}
           loading="lazy"
         />
         <span className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent opacity-85 transition duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
@@ -49,18 +55,18 @@ export function PhotoCard({ photo }: PhotoCardProps) {
             <MessageCircle size={13} />
             {photo._count?.comments ?? 0}
           </span>
-          {photo.tags?.slice(0, 2).map((photoTag) => (
+          {tags.slice(0, 2).map((tag) => (
             <Link
               className="focus-ring rounded-lg border border-white/30 bg-white/20 px-2 py-1 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/30"
-              key={photoTag.tag.id}
-              to={`/explore?tag=${encodeURIComponent(photoTag.tag.slug)}`}
+              key={tag.id}
+              to={`/explore?tag=${encodeURIComponent(tag.slug)}`}
             >
-              #{photoTag.tag.name}
+              #{tag.name}
             </Link>
           ))}
-          {photo.tags && photo.tags.length > 2 ? (
+          {tags.length > 2 ? (
             <span className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/75 backdrop-blur-md">
-              +{photo.tags.length - 2}
+              +{tags.length - 2}
             </span>
           ) : null}
         </div>

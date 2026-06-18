@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { PhotoGrid } from "../components/Gallery/PhotoGrid";
 import { SearchBar } from "../components/Search/SearchBar";
 import { SearchResults } from "../components/Search/SearchResults";
 import { searchService } from "../services/search.service";
@@ -137,9 +138,7 @@ export default function Search() {
       ) : null}
 
       {photosQuery.isLoading ? (
-        <section className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
-          Searching photos...
-        </section>
+        <PhotoGrid photos={[]} isLoading layout="masonry" />
       ) : (
         <>
           <p className="text-sm text-slate-600">{total} public photos found</p>
@@ -148,7 +147,7 @@ export default function Search() {
       )}
 
       {photos.length > 0 ? (
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <button
             className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
             type="button"

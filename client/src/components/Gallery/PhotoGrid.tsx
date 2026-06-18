@@ -1,9 +1,11 @@
+import type { CSSProperties } from "react";
 import type { Photo } from "../../types";
 import { SkeletonGrid } from "../Common/SkeletonCard";
 import { PhotoCard } from "./PhotoCard";
 
-interface PhotoGridProps {
+export interface PhotoGridProps {
   photos: Photo[];
+  layout?: "grid" | "masonry";
   isLoading?: boolean;
   isError?: boolean;
   error?: Error | null;
@@ -13,6 +15,7 @@ interface PhotoGridProps {
 
 export function PhotoGrid({
   photos,
+  layout = "grid",
   isLoading = false,
   isError = false,
   error = null,
@@ -20,12 +23,12 @@ export function PhotoGrid({
   emptyMessage = "No photos match this view."
 }: PhotoGridProps) {
   if (isLoading) {
-    return <SkeletonGrid />;
+    return <SkeletonGrid layout={layout} />;
   }
 
   if (isError) {
     return (
-      <section className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
+      <section className="rounded-xl border border-red-200 bg-red-50 p-8 text-center">
         <h2 className="text-lg font-semibold text-red-900">Error loading photos</h2>
         <p className="mt-2 text-sm text-red-700">{error?.message ?? "Please try again later."}</p>
       </section>
@@ -34,17 +37,35 @@ export function PhotoGrid({
 
   if (photos.length === 0) {
     return (
-      <section className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
-        <h2 className="text-lg font-semibold text-ink">{emptyTitle}</h2>
-        <p className="mt-2 text-sm text-slate-500">{emptyMessage}</p>
+      <section className="rounded-xl border border-dashed border-vellum bg-surface/75 p-8 text-center">
+        <h2 className="text-2xl font-bold text-ink">{emptyTitle}</h2>
+        <p className="mt-2 text-sm text-ink-muted">{emptyMessage}</p>
       </section>
+    );
+  }
+
+  if (layout === "masonry") {
+    return (
+      <div className="masonry-grid">
+        {photos.map((photo, index) => (
+          <div
+            className="masonry-item stagger-item"
+            key={photo.id}
+            style={{ "--stagger-index": index } as CSSProperties}
+          >
+            <PhotoCard photo={photo} layout="masonry" />
+          </div>
+        ))}
+      </div>
     );
   }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {photos.map((photo) => (
-        <PhotoCard key={photo.id} photo={photo} />
+      {photos.map((photo, index) => (
+        <div className="stagger-item" key={photo.id} style={{ "--stagger-index": index } as CSSProperties}>
+          <PhotoCard photo={photo} />
+        </div>
       ))}
     </div>
   );

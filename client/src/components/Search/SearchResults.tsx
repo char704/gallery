@@ -6,5 +6,5 @@ interface SearchResultsProps {
 }
 
 export function SearchResults({ photos }: SearchResultsProps) {
-  return <PhotoGrid photos={photos} />;
+  return <PhotoGrid photos={photos} layout="masonry" />;
 }

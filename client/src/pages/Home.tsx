@@ -126,7 +126,7 @@ export default function Home() {
               icon: Folders
             }
           ].map(({ title, text, icon: Icon }) => (
-            <article key={title} className="rounded-xl border border-vellum bg-surface/75 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
+            <article key={title} className="rounded-xl border border-vellum bg-surface/75 p-5 shadow-sm transition motion-safe:hover:-translate-y-0.5 hover:shadow-soft">
               <Icon className="text-lagoon" size={22} />
               <h3 className="mt-3 text-xl font-bold text-ink">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-ink-muted">{text}</p>

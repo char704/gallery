@@ -51,7 +51,7 @@ export function Header() {
             Albums
           </NavLink>
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Link
             className="focus-ring rounded-lg border border-vellum bg-white/40 p-2 text-ink-soft transition hover:bg-surface hover:text-pine-dark"
             to="/search"
@@ -60,7 +60,7 @@ export function Header() {
             <Search size={18} />
           </Link>
           <Link
-            className="focus-ring inline-flex items-center gap-2 rounded-lg bg-pine px-3 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-pine-dark"
+            className="focus-ring inline-flex items-center gap-2 rounded-lg bg-pine px-2 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-pine-dark sm:px-3"
             to="/upload"
           >
             <Upload size={16} />
@@ -68,7 +68,7 @@ export function Header() {
           </Link>
           {isAuthenticated ? (
             <button
-              className="focus-ring rounded-lg border border-vellum bg-white/40 px-3 py-2 text-sm font-semibold text-ink-soft transition hover:bg-surface hover:text-ink"
+              className="focus-ring rounded-lg border border-vellum bg-white/40 px-2 py-2 text-sm font-semibold text-ink-soft transition hover:bg-surface hover:text-ink sm:px-3"
               type="button"
               onClick={handleLogout}
             >
@@ -76,7 +76,7 @@ export function Header() {
             </button>
           ) : (
             <Link
-              className="focus-ring rounded-lg border border-vellum bg-white/40 px-3 py-2 text-sm font-semibold text-ink-soft transition hover:bg-surface hover:text-ink"
+              className="focus-ring rounded-lg border border-vellum bg-white/40 px-2 py-2 text-sm font-semibold text-ink-soft transition hover:bg-surface hover:text-ink sm:px-3"
               to="/login"
             >
               Login

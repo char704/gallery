@@ -160,6 +160,7 @@ export default function Explore() {
       <div className="mt-5">
         <PhotoGrid
           photos={photos}
+          layout="masonry"
           isLoading={isLoading}
           isError={isError}
           error={error instanceof Error ? error : null}
@@ -171,7 +172,7 @@ export default function Explore() {
           }
         />
         {!isLoading && !isError && photos.length > 0 && pages > 1 ? (
-          <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
               className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
               type="button"

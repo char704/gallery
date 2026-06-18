@@ -22,12 +22,12 @@ export function Sidebar() {
   return (
     <aside
       className={[
-        "w-56 shrink-0 lg:block",
+        "w-full shrink-0 lg:block lg:w-56",
         isSidebarOpen ? "block" : "hidden"
       ].join(" ")}
       aria-label="Section navigation"
     >
-      <nav className="sticky top-24 space-y-1 rounded-xl border border-white/40 bg-white/20 p-2 backdrop-blur-md">
+      <nav className="space-y-1 rounded-xl border border-white/40 bg-white/20 p-2 backdrop-blur-md lg:sticky lg:top-24">
         {links.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} className={navLinkClass} to={to}>
             <Icon size={18} />

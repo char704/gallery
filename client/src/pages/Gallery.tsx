@@ -34,7 +34,7 @@ export default function Gallery({ title = "Gallery" }: GalleryProps) {
         {photos.length > 0 ? (
           <>
             <PhotoGrid photos={photos} />
-            <div className="mt-6 flex items-center justify-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <button
                 className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
                 type="button"
