@@ -12,8 +12,8 @@ const links = [
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
-    "focus-ring flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-    isActive ? "bg-white text-pine shadow-sm" : "text-slate-600 hover:bg-white"
+    "focus-ring flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition duration-300",
+    isActive ? "bg-surface text-pine-dark shadow-sm" : "text-ink-muted hover:bg-surface/70 hover:text-ink"
   ].join(" ");
 
 export function Sidebar() {
@@ -27,7 +27,7 @@ export function Sidebar() {
       ].join(" ")}
       aria-label="Section navigation"
     >
-      <nav className="sticky top-6 space-y-1">
+      <nav className="sticky top-24 space-y-1 rounded-xl border border-white/40 bg-white/20 p-2 backdrop-blur-md">
         {links.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} className={navLinkClass} to={to}>
             <Icon size={18} />

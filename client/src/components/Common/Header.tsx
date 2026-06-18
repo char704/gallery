@@ -6,8 +6,8 @@ import { APP_NAME } from "../../utils/constants";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
-    "focus-ring rounded-lg px-3 py-2 text-sm font-medium transition",
-    isActive ? "bg-pine text-white" : "text-slate-700 hover:bg-white"
+    "focus-ring rounded-lg px-3 py-2 text-sm font-semibold transition duration-300",
+    isActive ? "bg-pine-light text-pine-dark" : "text-ink-soft hover:bg-surface hover:text-pine-dark"
   ].join(" ");
 
 export function Header() {
@@ -22,11 +22,11 @@ export function Header() {
   }
 
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-40 border-b border-vellum/80 bg-surface/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <button
-            className="focus-ring rounded-lg border border-slate-200 p-2 text-slate-700 lg:hidden"
+            className="focus-ring rounded-lg border border-vellum bg-white/50 p-2 text-ink-soft lg:hidden"
             type="button"
             onClick={toggleSidebar}
             aria-label="Toggle navigation"
@@ -34,10 +34,10 @@ export function Header() {
             <Menu size={18} />
           </button>
           <Link className="focus-ring flex items-center gap-2 rounded-lg" to="/">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink text-white shadow-soft">
               <Camera size={20} />
             </span>
-            <span className="text-lg font-semibold">{APP_NAME}</span>
+            <span className="font-display text-2xl font-bold text-ink">{APP_NAME}</span>
           </Link>
         </div>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
@@ -53,14 +53,14 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-2">
           <Link
-            className="focus-ring rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-50"
+            className="focus-ring rounded-lg border border-vellum bg-white/40 p-2 text-ink-soft transition hover:bg-surface hover:text-pine-dark"
             to="/search"
             aria-label="Search"
           >
             <Search size={18} />
           </Link>
           <Link
-            className="focus-ring inline-flex items-center gap-2 rounded-lg bg-pine px-3 py-2 text-sm font-semibold text-white hover:bg-teal-800"
+            className="focus-ring inline-flex items-center gap-2 rounded-lg bg-pine px-3 py-2 text-sm font-semibold text-white shadow-soft transition hover:bg-pine-dark"
             to="/upload"
           >
             <Upload size={16} />
@@ -68,7 +68,7 @@ export function Header() {
           </Link>
           {isAuthenticated ? (
             <button
-              className="focus-ring rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="focus-ring rounded-lg border border-vellum bg-white/40 px-3 py-2 text-sm font-semibold text-ink-soft transition hover:bg-surface hover:text-ink"
               type="button"
               onClick={handleLogout}
             >
@@ -76,7 +76,7 @@ export function Header() {
             </button>
           ) : (
             <Link
-              className="focus-ring rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="focus-ring rounded-lg border border-vellum bg-white/40 px-3 py-2 text-sm font-semibold text-ink-soft transition hover:bg-surface hover:text-ink"
               to="/login"
             >
               Login

@@ -37,9 +37,9 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-mist text-ink">
+      <div className="min-h-screen bg-transparent text-ink">
         <Header />
-        <div className="mx-auto flex w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:px-8">
           <Sidebar />
           <main className="min-w-0 flex-1">
             {isLoading ? (
