@@ -8,6 +8,30 @@ function parsePage(value: unknown, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function parseTags(value: unknown): string[] {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter((tag): tag is string => typeof tag === "string");
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((tag): tag is string => typeof tag === "string") : [];
+  } catch {
+    return value
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+}
+
 export const photoController = {
   list: (async (req, res, next) => {
     try {
@@ -48,10 +72,11 @@ export const photoController = {
         throw new AppError("No file uploaded.", 400, "NO_FILE_UPLOADED");
       }
 
-      const { title, description, visibility } = req.body as {
+      const { title, description, visibility, tags } = req.body as {
         title?: string;
         description?: string;
         visibility?: string;
+        tags?: unknown;
       };
 
       if (!title?.trim()) {
@@ -69,10 +94,25 @@ export const photoController = {
         description || null,
         req.file.buffer,
         req.file.originalname,
-        photoService.parseVisibility(visibility)
+        photoService.parseVisibility(visibility),
+        parseTags(tags)
       );
 
       res.status(201).json(successResponse(photo, "Photo uploaded."));
+    } catch (error) {
+      next(error);
+    }
+  }) satisfies RequestHandler,
+
+  updateTags: (async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new AppError("Unauthorized - No token provided.", 401, "UNAUTHORIZED");
+      }
+
+      const photo = await photoService.updatePhotoTags(req.params.id, req.user.id, parseTags((req.body as { tags?: unknown }).tags));
+
+      res.json(successResponse(photo, "Photo tags updated."));
     } catch (error) {
       next(error);
     }

@@ -20,6 +20,15 @@ export interface PhotoListResult {
         likes: number;
         comments: number;
       };
+      tags: Array<{
+        tag: {
+          id: string;
+          name: string;
+          slug: string;
+          createdAt: Date;
+          updatedAt: Date;
+        };
+      }>;
     }
   >;
   total: number;
@@ -46,24 +55,25 @@ function sortOrDefault(value: unknown): PhotoSort {
   return value === "oldest" || value === "popular" || value === "latest" ? value : "latest";
 }
 
-function toPublicOrderBy(sort: PhotoSort): Prisma.PhotoOrderByWithRelationInput {
+function toPublicOrderBy(sort: PhotoSort): Prisma.PhotoOrderByWithRelationInput[] {
   if (sort === "oldest") {
-    return {
-      createdAt: "asc"
-    };
+    return [{ createdAt: "asc" }];
   }
 
   if (sort === "popular") {
-    return {
-      likes: {
-        _count: "desc"
+    return [
+      {
+        likes: {
+          _count: "desc"
+        }
+      },
+      {
+        createdAt: "desc"
       }
-    };
+    ];
   }
 
-  return {
-    createdAt: "desc"
-  };
+  return [{ createdAt: "desc" }];
 }
 
 const photoInclude = {
@@ -72,6 +82,11 @@ const photoInclude = {
       id: true,
       name: true,
       avatarUrl: true
+    }
+  },
+  tags: {
+    include: {
+      tag: true
     }
   },
   _count: {
@@ -89,7 +104,8 @@ export const photoService = {
     description: string | null,
     fileBuffer: Buffer,
     originalFileName: string,
-    visibility: Visibility = "PRIVATE"
+    visibility: Visibility = "PRIVATE",
+    tags: string[] = []
   ) {
     const cloudinaryData = await cloudinaryService.uploadImage({
       fileBuffer,
@@ -98,6 +114,8 @@ export const photoService = {
     });
 
     try {
+      const tagRecords = await this.ensureTags(tags);
+
       return await prisma.photo.create({
         data: {
           title: title.trim(),
@@ -109,7 +127,16 @@ export const photoService = {
           height: cloudinaryData.height,
           fileSize: cloudinaryData.fileSize,
           visibility,
-          userId
+          userId,
+          tags: tagRecords.length
+            ? {
+                createMany: {
+                  data: tagRecords.map((tag) => ({
+                    tagId: tag.id
+                  }))
+                }
+              }
+            : undefined
         },
         include: photoInclude
       });
@@ -125,6 +152,33 @@ export const photoService = {
 
       throw error;
     }
+  },
+
+  async ensureTags(tagNames: string[]) {
+    const normalizedTags = tagNames
+      .map((tag) => tag.trim().toLowerCase())
+      .filter((tag) => tag.length > 0 && tag.length <= 30)
+      .filter((tag, index, self) => self.indexOf(tag) === index)
+      .slice(0, 20);
+
+    if (!normalizedTags.length) {
+      return [];
+    }
+
+    return Promise.all(
+      normalizedTags.map((name) =>
+        prisma.tag.upsert({
+          where: {
+            name
+          },
+          update: {},
+          create: {
+            name,
+            slug: name.replace(/\s+/g, "-")
+          }
+        })
+      )
+    );
   },
 
   async getUserPhotos(userId: string, page = 1, limit = DEFAULT_LIMIT, includePrivate = false): Promise<PhotoListResult> {
@@ -285,6 +339,49 @@ export const photoService = {
         id: photoId
       },
       data,
+      include: photoInclude
+    });
+  },
+
+  async updatePhotoTags(photoId: string, userId: string, tagNames: string[]) {
+    const photo = await prisma.photo.findUnique({
+      where: {
+        id: photoId
+      }
+    });
+
+    if (!photo) {
+      throw new AppError("Photo not found.", 404, "PHOTO_NOT_FOUND");
+    }
+
+    if (photo.userId !== userId) {
+      throw new AppError("Forbidden - Not photo owner.", 403, "FORBIDDEN");
+    }
+
+    const tags = await this.ensureTags(tagNames);
+
+    await prisma.$transaction([
+      prisma.photoTag.deleteMany({
+        where: {
+          photoId
+        }
+      }),
+      ...(tags.length
+        ? [
+            prisma.photoTag.createMany({
+              data: tags.map((tag) => ({
+                photoId,
+                tagId: tag.id
+              }))
+            })
+          ]
+        : [])
+    ]);
+
+    return prisma.photo.findUniqueOrThrow({
+      where: {
+        id: photoId
+      },
       include: photoInclude
     });
   },

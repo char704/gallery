@@ -96,12 +96,35 @@ describe("Photo authorization integration", () => {
     expect(response.body.data.title).toBe("Updated Title");
   });
 
+  it("allows the owner to update photo tags", async () => {
+    const response = await request(app)
+      .patch(`/api/photos/${privatePhotoId}/tags`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({
+        tags: ["Portrait", "Studio"]
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.tags.map((photoTag: { tag: { slug: string } }) => photoTag.tag.slug)).toEqual(["portrait", "studio"]);
+  });
+
   it("rejects non-owners from updating photo metadata", async () => {
     const response = await request(app)
       .patch(`/api/photos/${privatePhotoId}`)
       .set("Authorization", `Bearer ${otherToken}`)
       .send({
         title: "Not Allowed"
+      });
+
+    expect(response.status).toBe(403);
+  });
+
+  it("rejects non-owners from updating photo tags", async () => {
+    const response = await request(app)
+      .patch(`/api/photos/${privatePhotoId}/tags`)
+      .set("Authorization", `Bearer ${otherToken}`)
+      .send({
+        tags: ["not-allowed"]
       });
 
     expect(response.status).toBe(403);

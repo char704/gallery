@@ -114,6 +114,32 @@ describe("Photo upload integration", () => {
     expect(photo?.publicId).toContain(runId);
   });
 
+  it("uploads tags and filters public photos by tag", async () => {
+    const { token } = await createSession("tags");
+
+    const response = await request(app)
+      .post("/api/photos")
+      .set("Authorization", `Bearer ${token}`)
+      .field("title", `Tagged ${runId}`)
+      .field("visibility", "PUBLIC")
+      .field("tags", JSON.stringify(["Nature", "Travel", "nature"]))
+      .attach("image", pngBuffer, {
+        filename: `${runId}.png`,
+        contentType: "image/png"
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.tags).toHaveLength(2);
+    expect(response.body.data.tags.map((photoTag: { tag: { name: string } }) => photoTag.tag.name)).toEqual(["nature", "travel"]);
+
+    const filtered = await request(app).get("/api/photos").query({
+      tag: "nature"
+    });
+
+    expect(filtered.status).toBe(200);
+    expect(filtered.body.data.photos.some((photo: { id: string }) => photo.id === response.body.data.id)).toBe(true);
+  });
+
   it("rejects uploads without authentication", async () => {
     const response = await request(app)
       .post("/api/photos")

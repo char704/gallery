@@ -12,6 +12,7 @@ import {
   photoIdValidator,
   photoListValidator,
   photoMetadataValidator,
+  photoTagsValidator,
   photoUploadValidator
 } from "../validators/photo.validator";
 
@@ -23,6 +24,7 @@ photoRouter.get("/user/:userId", paginationValidator, validateRequest, photoCont
 photoRouter.post("/", requireAuth, upload.single("image"), validateUpload, photoUploadValidator, validateRequest, photoController.upload);
 photoRouter.get("/:id", optionalAuth, photoIdValidator, validateRequest, photoController.detail);
 photoRouter.patch("/:id", requireAuth, photoIdValidator, photoMetadataValidator, validateRequest, photoController.update);
+photoRouter.patch("/:id/tags", requireAuth, photoIdValidator, photoTagsValidator, validateRequest, photoController.updateTags);
 photoRouter.delete("/:id", requireAuth, photoIdValidator, validateRequest, photoController.remove);
 
 photoRouter.post("/:photoId/like", requireAuth, photoActionIdValidator, validateRequest, likeController.like);
