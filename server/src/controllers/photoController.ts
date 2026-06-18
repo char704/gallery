@@ -1,6 +1,5 @@
 import type { RequestHandler } from "express";
 import { photoService } from "../services/photo.service";
-import { cloudinaryService } from "../services/cloudinary.service";
 import { AppError } from "../utils/errorHandler";
 import { successResponse } from "../utils/responseFormatter";
 
@@ -61,17 +60,12 @@ export const photoController = {
         ]);
       }
 
-      const cloudinaryData = await cloudinaryService.uploadImage(req.file.buffer, req.file.originalname);
       const photo = await photoService.createPhoto(
         req.user.id,
         title,
         description || null,
-        cloudinaryData.url,
-        cloudinaryData.thumbnailUrl,
-        cloudinaryData.publicId,
-        cloudinaryData.width,
-        cloudinaryData.height,
-        cloudinaryData.fileSize,
+        req.file.buffer,
+        req.file.originalname,
         photoService.parseVisibility(visibility)
       );
 

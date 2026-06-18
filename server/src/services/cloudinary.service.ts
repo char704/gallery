@@ -1,4 +1,5 @@
 import type { UploadApiResponse } from "cloudinary";
+import { v4 as uuidv4 } from "uuid";
 import { isProduction } from "../config/env";
 import { cloudinary } from "../config/cloudinary";
 import { AppError } from "../utils/errorHandler";
@@ -11,15 +12,25 @@ export interface UploadedImage {
   width: number;
   height: number;
   fileSize: number;
+  folderPath: string;
 }
 
-function sanitizePublicId(fileName: string): string {
-  return fileName
-    .replace(/\.[^/.]+$/, "")
-    .replace(/[^a-zA-Z0-9-_]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80);
+export interface UploadImageParams {
+  fileBuffer: Buffer;
+  userId: string;
+  originalFileName: string;
+}
+
+export interface CloudinaryImageResource {
+  publicId: string;
+  url: string;
+  createdAt: string;
+}
+
+interface CloudinaryListedResource {
+  public_id: string;
+  secure_url: string;
+  created_at: string;
 }
 
 function getCloudinaryErrorInfo(error: unknown): { message: string; httpCode?: number } {
@@ -53,15 +64,21 @@ function getCloudinaryErrorInfo(error: unknown): { message: string; httpCode?: n
 }
 
 export const cloudinaryService = {
-  async uploadImage(fileBuffer: Buffer, fileName: string): Promise<UploadedImage> {
+  async uploadImage({ fileBuffer, userId, originalFileName }: UploadImageParams): Promise<UploadedImage> {
     return new Promise((resolve, reject) => {
+      const folderPath = `framehub/${userId}`;
+      const uniqueId = uuidv4();
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           resource_type: "image",
-          folder: "framehub",
-          public_id: sanitizePublicId(fileName),
+          folder: folderPath,
+          public_id: uniqueId,
           quality: "auto",
-          fetch_format: "auto"
+          fetch_format: "auto",
+          context: {
+            alt: originalFileName,
+            uploadedAt: new Date().toISOString()
+          }
         },
         (error, result?: UploadApiResponse) => {
           if (error) {
@@ -95,7 +112,8 @@ export const cloudinaryService = {
             }),
             width: result.width,
             height: result.height,
-            fileSize: result.bytes
+            fileSize: result.bytes,
+            folderPath
           });
         }
       );
@@ -105,8 +123,33 @@ export const cloudinaryService = {
   },
 
   async deleteImage(publicId: string): Promise<void> {
-    await cloudinary.uploader.destroy(publicId, {
+    const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image"
     });
+
+    if (result.result === "not found") {
+      logger.warn("Cloudinary image was already missing", {
+        publicId
+      });
+      return;
+    }
+
+    if (result.result !== "ok") {
+      throw new AppError(`Cloudinary deletion failed: ${result.result}`, 502, "CLOUDINARY_DELETE_FAILED");
+    }
+  },
+
+  async listUserImages(userId: string): Promise<CloudinaryImageResource[]> {
+    const result = await cloudinary.api.resources({
+      type: "upload",
+      prefix: `framehub/${userId}`,
+      max_results: 500
+    });
+
+    return (result.resources as CloudinaryListedResource[]).map((resource) => ({
+      publicId: resource.public_id,
+      url: resource.secure_url,
+      createdAt: resource.created_at
+    }));
   }
 };

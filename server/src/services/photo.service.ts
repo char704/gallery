@@ -1,6 +1,7 @@
 import type { Photo, Prisma, Visibility } from "@prisma/client";
 import { prisma } from "../config/database";
 import { AppError } from "../utils/errorHandler";
+import { logger } from "../utils/logger";
 import { cloudinaryService } from "./cloudinary.service";
 
 const DEFAULT_LIMIT = 12;
@@ -61,29 +62,44 @@ export const photoService = {
     userId: string,
     title: string,
     description: string | null,
-    imageUrl: string,
-    thumbnailUrl: string,
-    publicId: string,
-    width: number,
-    height: number,
-    fileSize: number,
+    fileBuffer: Buffer,
+    originalFileName: string,
     visibility: Visibility = "PRIVATE"
   ) {
-    return prisma.photo.create({
-      data: {
-        title: title.trim(),
-        description: description?.trim() || null,
-        imageUrl,
-        thumbnailUrl,
-        publicId,
-        width,
-        height,
-        fileSize,
-        visibility,
-        userId
-      },
-      include: photoInclude
+    const cloudinaryData = await cloudinaryService.uploadImage({
+      fileBuffer,
+      userId,
+      originalFileName
     });
+
+    try {
+      return await prisma.photo.create({
+        data: {
+          title: title.trim(),
+          description: description?.trim() || null,
+          imageUrl: cloudinaryData.url,
+          thumbnailUrl: cloudinaryData.thumbnailUrl,
+          publicId: cloudinaryData.publicId,
+          width: cloudinaryData.width,
+          height: cloudinaryData.height,
+          fileSize: cloudinaryData.fileSize,
+          visibility,
+          userId
+        },
+        include: photoInclude
+      });
+    } catch (error) {
+      try {
+        await cloudinaryService.deleteImage(cloudinaryData.publicId);
+      } catch (cleanupError) {
+        logger.warn("Failed to clean up Cloudinary upload after database error", {
+          publicId: cloudinaryData.publicId,
+          cleanupError
+        });
+      }
+
+      throw error;
+    }
   },
 
   async getUserPhotos(userId: string, page = 1, limit = DEFAULT_LIMIT, includePrivate = false): Promise<PhotoListResult> {
@@ -256,13 +272,22 @@ export const photoService = {
       throw new AppError("Forbidden - Not photo owner.", 403, "FORBIDDEN");
     }
 
-    await cloudinaryService.deleteImage(photo.publicId);
-
-    return prisma.photo.delete({
+    const deletedPhoto = await prisma.photo.delete({
       where: {
         id: photoId
       }
     });
+
+    try {
+      await cloudinaryService.deleteImage(photo.publicId);
+    } catch (error) {
+      logger.warn("Failed to delete Cloudinary image after database record removal", {
+        publicId: photo.publicId,
+        error
+      });
+    }
+
+    return deletedPhoto;
   },
 
   parseVisibility: visibilityOrDefault
