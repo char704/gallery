@@ -1,7 +1,6 @@
-import { Eye, Heart, Image, Lock, MessageCircle } from "lucide-react";
+import { Eye, Heart, Lock, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Photo } from "../../types";
-import { formatDate, formatFileSize } from "../../utils/formatters";
 
 interface PhotoCardProps {
   photo: Photo;
@@ -11,60 +10,60 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   const VisibilityIcon = photo.visibility === "PUBLIC" ? Eye : Lock;
 
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <article className="group relative overflow-hidden rounded-xl bg-ink shadow-soft transition duration-300 hover:-translate-y-0.5 hover:shadow-gallery">
       <Link
-        className="focus-ring group relative block aspect-[4/3] w-full overflow-hidden bg-slate-100"
+        className="focus-ring block aspect-[4/3] w-full overflow-hidden"
         to={`/photos/${photo.id}`}
         aria-label={`Open ${photo.title}`}
       >
         <img
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           src={photo.thumbnailUrl}
           alt={photo.title}
           loading="lazy"
         />
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-xs font-medium text-slate-700">
-          <VisibilityIcon size={13} />
-          {photo.visibility.toLowerCase()}
-        </span>
-        <span className="absolute inset-0 bg-ink/0 transition duration-300 group-hover:bg-ink/10" />
+        <span className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent opacity-85 transition duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
       </Link>
-      <div className="space-y-3 p-4">
-        <div className="min-w-0">
-          <Link className="focus-ring block rounded-lg font-semibold text-ink hover:text-pine" to={`/photos/${photo.id}`}>
+      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg border border-white/30 bg-white/25 px-2 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur-md">
+        <VisibilityIcon size={13} />
+        {photo.visibility.toLowerCase()}
+      </span>
+      <div className="absolute inset-x-0 bottom-0 space-y-3 p-3 opacity-100 transition duration-300 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
+        <div className="rounded-xl border border-white/30 bg-white/20 p-3 text-white shadow-soft backdrop-blur-xl">
+          <Link className="focus-ring block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light" to={`/photos/${photo.id}`}>
             {photo.title}
           </Link>
-          <p className="mt-1 truncate text-sm text-slate-500">{photo.description}</p>
+          {photo.description ? <p className="mt-1 line-clamp-2 text-sm leading-5 text-white/80">{photo.description}</p> : null}
+          {photo.user ? (
+            <Link className="focus-ring mt-2 inline-flex rounded text-sm font-semibold text-white/85 hover:text-white" to={`/users/${photo.user.id}`}>
+              by {photo.user.name}
+            </Link>
+          ) : null}
         </div>
-        {photo.tags?.length ? (
-          <div className="flex flex-wrap gap-1">
-            {photo.tags.slice(0, 2).map((photoTag) => (
-              <Link
-                className="focus-ring rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-200"
-                key={photoTag.tag.id}
-                to={`/explore?tag=${encodeURIComponent(photoTag.tag.slug)}`}
-              >
-                #{photoTag.tag.name}
-              </Link>
-            ))}
-            {photo.tags.length > 2 ? <span className="px-2 py-1 text-xs text-slate-500">+{photo.tags.length - 2}</span> : null}
-          </div>
-        ) : null}
-        <dl className="grid grid-cols-2 gap-3 text-xs text-slate-500">
-          <div className="flex items-center gap-1">
-            <Image size={14} />
-            <span>{formatFileSize(photo.fileSize)}</span>
-          </div>
-          <div className="text-right">{formatDate(photo.createdAt)}</div>
-          <div className="flex items-center gap-1">
-            <Heart size={14} />
-            <span>{photo._count?.likes ?? 0}</span>
-          </div>
-          <div className="flex items-center justify-end gap-1">
-            <MessageCircle size={14} />
-            <span>{photo._count?.comments ?? 0}</span>
-          </div>
-        </dl>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-lg border border-white/30 bg-white/20 px-2 py-1 text-xs font-semibold text-white backdrop-blur-md">
+            <Heart size={13} />
+            {photo._count?.likes ?? 0}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-lg border border-white/30 bg-white/20 px-2 py-1 text-xs font-semibold text-white backdrop-blur-md">
+            <MessageCircle size={13} />
+            {photo._count?.comments ?? 0}
+          </span>
+          {photo.tags?.slice(0, 2).map((photoTag) => (
+            <Link
+              className="focus-ring rounded-lg border border-white/30 bg-white/20 px-2 py-1 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/30"
+              key={photoTag.tag.id}
+              to={`/explore?tag=${encodeURIComponent(photoTag.tag.slug)}`}
+            >
+              #{photoTag.tag.name}
+            </Link>
+          ))}
+          {photo.tags && photo.tags.length > 2 ? (
+            <span className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/75 backdrop-blur-md">
+              +{photo.tags.length - 2}
+            </span>
+          ) : null}
+        </div>
       </div>
     </article>
   );
