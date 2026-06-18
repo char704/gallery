@@ -1,21 +1,9 @@
 import type { CorsOptions } from "cors";
+import { env } from "./env";
 import { logger } from "../utils/logger";
 
 function normalizeOrigin(origin: string): string {
   return origin.trim().replace(/\/+$/, "");
-}
-
-function parseCorsOrigins(): string[] {
-  const envOrigins = process.env.CORS_ORIGIN ?? "";
-
-  if (!envOrigins) {
-    return [];
-  }
-
-  return envOrigins
-    .split(",")
-    .map(normalizeOrigin)
-    .filter((origin) => origin.length > 0);
 }
 
 const localOrigins = [
@@ -25,7 +13,9 @@ const localOrigins = [
   "http://127.0.0.1:5174"
 ];
 
-export const corsOrigins = Array.from(new Set([...localOrigins, ...parseCorsOrigins()]));
+export const corsOrigins = Array.from(
+  new Set([...(env.nodeEnv === "production" ? [] : localOrigins), ...env.corsOrigins.map(normalizeOrigin)])
+);
 
 export const corsConfig: CorsOptions = {
   origin(origin, callback) {
