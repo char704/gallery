@@ -90,6 +90,28 @@ export interface PhotoListResult {
   pages: number;
 }
 
+export interface PhotoComment {
+  id: string;
+  content: string;
+  photoId: string;
+  userId: string;
+  user?: Pick<User, "id" | "name" | "avatarUrl">;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommentListResult {
+  comments: PhotoComment[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+export interface LikeSummary {
+  count: number;
+  isLiked: boolean;
+}
+
 export interface UploadPhotoPayload {
   file: File;
   title: string;

@@ -176,25 +176,6 @@ export const photoService = {
             tag: true
           }
         },
-        likes: {
-          select: {
-            userId: true
-          }
-        },
-        comments: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatarUrl: true
-              }
-            }
-          },
-          orderBy: {
-            createdAt: "desc"
-          }
-        },
         _count: {
           select: {
             likes: true,

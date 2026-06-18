@@ -2,6 +2,10 @@ import { body, param, query } from "express-validator";
 
 export const photoIdValidator = [param("id").isUUID()];
 
+export const photoActionIdValidator = [param("photoId").isUUID()];
+
+export const commentIdValidator = [param("commentId").isUUID()];
+
 export const photoListValidator = [
   query("tag").optional().isString().trim().isLength({ max: 80 }),
   query("sort").optional().isIn(["latest", "oldest", "popular"]),
@@ -20,3 +24,5 @@ export const photoUploadValidator = [
   body("description").optional().isString().trim().isLength({ max: 1000 }),
   body("visibility").optional().isIn(["PUBLIC", "PRIVATE", "UNLISTED"])
 ];
+
+export const commentMetadataValidator = [body("content").isString().trim().isLength({ min: 1, max: 1000 })];

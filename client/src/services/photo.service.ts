@@ -1,5 +1,14 @@
 import { apiRequest } from "./api";
-import type { Photo, PhotoListResult, PhotoQueryParams, UploadPhotoPayload, Visibility } from "../types";
+import type {
+  CommentListResult,
+  LikeSummary,
+  Photo,
+  PhotoComment,
+  PhotoListResult,
+  PhotoQueryParams,
+  UploadPhotoPayload,
+  Visibility
+} from "../types";
 
 function toQueryString(params: PhotoQueryParams = {}): string {
   const searchParams = new URLSearchParams();
@@ -75,6 +84,59 @@ export const photoService = {
 
   deletePhoto(photoId: string, token: string): Promise<{ deleted: boolean }> {
     return apiRequest<{ deleted: boolean }>(`/photos/${photoId}`, {
+      method: "DELETE",
+      token
+    });
+  },
+
+  getComments(photoId: string, page = 1, limit = 20, token?: string | null): Promise<CommentListResult> {
+    return apiRequest<CommentListResult>(`/photos/${photoId}/comments${toQueryString({ page, limit })}`, {
+      token: token ?? undefined
+    });
+  },
+
+  createComment(photoId: string, content: string, token: string): Promise<PhotoComment> {
+    return apiRequest<PhotoComment>(`/photos/${photoId}/comments`, {
+      method: "POST",
+      body: {
+        content
+      },
+      token
+    });
+  },
+
+  updateComment(commentId: string, content: string, token: string): Promise<PhotoComment> {
+    return apiRequest<PhotoComment>(`/comments/${commentId}`, {
+      method: "PATCH",
+      body: {
+        content
+      },
+      token
+    });
+  },
+
+  deleteComment(commentId: string, token: string): Promise<{ deleted: boolean }> {
+    return apiRequest<{ deleted: boolean }>(`/comments/${commentId}`, {
+      method: "DELETE",
+      token
+    });
+  },
+
+  getLikeSummary(photoId: string, token?: string | null): Promise<LikeSummary> {
+    return apiRequest<LikeSummary>(`/photos/${photoId}/likes`, {
+      token: token ?? undefined
+    });
+  },
+
+  likePhoto(photoId: string, token: string): Promise<LikeSummary> {
+    return apiRequest<LikeSummary>(`/photos/${photoId}/like`, {
+      method: "POST",
+      token
+    });
+  },
+
+  unlikePhoto(photoId: string, token: string): Promise<LikeSummary> {
+    return apiRequest<LikeSummary>(`/photos/${photoId}/like`, {
       method: "DELETE",
       token
     });
