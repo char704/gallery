@@ -3,6 +3,7 @@ import cors from "cors";
 import express, { type Express } from "express";
 import { corsConfig } from "./config/cors";
 import { env } from "./config/env";
+import { apiResponseHeaders } from "./middlewares/apiResponse.middleware";
 import { apiRateLimit } from "./middlewares/rateLimit.middleware";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.middleware";
 import { apiRouter } from "./routes";
@@ -28,7 +29,7 @@ export function createApp(): Express {
     res.json(successResponse(payload));
   });
 
-  app.use(API_PREFIX, apiRateLimit, apiRouter);
+  app.use(API_PREFIX, apiResponseHeaders, apiRateLimit, apiRouter);
   app.use(notFoundHandler);
   app.use(errorHandler);
 

@@ -21,7 +21,8 @@ export class ApiClientError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    public readonly code = "API_ERROR"
+    public readonly code = "API_ERROR",
+    public readonly responsePreview?: string
   ) {
     super(message);
     this.name = "ApiClientError";
@@ -45,6 +46,34 @@ function buildRequestBody(body: unknown): BodyInit | undefined {
   return JSON.stringify(body);
 }
 
+function previewText(text: string): string {
+  return text.replace(/\s+/g, " ").trim().slice(0, 180);
+}
+
+async function parseApiResponse<T>(response: Response): Promise<ApiResponse<T>> {
+  const contentType = response.headers.get("content-type") ?? "";
+  const responseText = await response.text();
+
+  if (!contentType.toLowerCase().includes("application/json")) {
+    const preview = previewText(responseText);
+    throw new ApiClientError(
+      preview
+        ? `Expected a JSON API response but received ${contentType || "an unknown content type"}: ${preview}`
+        : `Expected a JSON API response but received ${contentType || "an unknown content type"}.`,
+      response.status,
+      "NON_JSON_RESPONSE",
+      preview
+    );
+  }
+
+  try {
+    return JSON.parse(responseText) as ApiResponse<T>;
+  } catch {
+    const preview = previewText(responseText);
+    throw new ApiClientError("Received invalid JSON from the API.", response.status, "INVALID_JSON_RESPONSE", preview);
+  }
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers(options.headers);
   const isFormData = options.body instanceof FormData;
@@ -59,13 +88,20 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   const requestBody = buildRequestBody(options.body);
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-    body: requestBody
-  });
+  let response: Response;
 
-  const payload = (await response.json()) as ApiResponse<T>;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      body: requestBody
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Network request failed.";
+    throw new ApiClientError(`Network request failed: ${message}`, 0, "NETWORK_ERROR");
+  }
+
+  const payload = await parseApiResponse<T>(response);
 
   if (!response.ok || !payload.success) {
     const message = payload.success ? response.statusText : payload.error.message;

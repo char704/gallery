@@ -27,3 +27,22 @@ export function errorResponse(
     }
   };
 }
+
+export function paginationMeta(page: number, limit: number, total: number): PaginationMeta {
+  return {
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit)
+  };
+}
+
+export function paginatedSuccessResponse<T>(
+  data: T,
+  page: number,
+  limit: number,
+  total: number,
+  message?: string
+): ApiSuccessResponse<T> {
+  return successResponse(data, message, paginationMeta(page, limit, total));
+}
