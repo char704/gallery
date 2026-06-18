@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prisma:generate": "prisma generate",
+    "prisma:deploy": "node scripts/prisma-deploy.cjs",
     "prisma:migrate": "prisma migrate dev --name init"
   },
   "dependencies": {

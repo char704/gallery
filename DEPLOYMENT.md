@@ -32,8 +32,8 @@ Recommended service settings:
 
 - Root directory: `server`
 - Environment: Node
-- Build command: `npm install && npm run prisma:generate && npm run build`
-- Start command: `npx prisma migrate deploy && npm start`
+- Build command: `npm ci && npm run prisma:generate && npm run build`
+- Start command: `npm run prisma:deploy && npm start`
 - Health check path: `/health`
 
 Required environment variables:
@@ -61,6 +61,14 @@ Important CORS details:
 - Local development origins are included automatically outside production only.
 - The production frontend origin should be exactly `https://gallery-ebon-six.vercel.app`.
 - Production startup fails if required environment variables are missing, if `JWT_SECRET` is too short, or if production database/CORS values point at localhost.
+
+If Render fails with Prisma `P1002`, the backend cannot complete a TCP connection to PostgreSQL before the timeout. Check that:
+
+- `DATABASE_URL` is the active Render PostgreSQL connection string.
+- The backend service and database are in the same Render region when using an internal database URL.
+- The database has not been suspended or deleted.
+- Migrations are not running in the build command. Use `npm run prisma:deploy && npm start` as the start command.
+- Optional retry tuning is available with `PRISMA_DEPLOY_MAX_ATTEMPTS` and `PRISMA_DEPLOY_RETRY_MS`.
 
 ## Deployment Verification
 
