@@ -7,6 +7,13 @@ export interface Tag {
   name: string;
   slug: string;
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface PhotoTag {
+  photoId?: string;
+  tagId?: string;
+  tag: Tag;
 }
 
 export interface Photo {
@@ -22,7 +29,7 @@ export interface Photo {
   visibility: Visibility;
   userId: string;
   user?: Pick<User, "id" | "name" | "avatarUrl">;
-  tags?: Tag[];
+  tags?: PhotoTag[];
   _count?: {
     likes: number;
     comments: number;
@@ -117,4 +124,5 @@ export interface UploadPhotoPayload {
   title: string;
   description?: string;
   visibility: Visibility;
+  tags?: string[];
 }

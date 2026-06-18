@@ -16,7 +16,8 @@ export const registerSchema = loginSchema.extend({
 export const uploadSchema = z.object({
   title: z.string().min(1, "Title is required.").max(120),
   description: z.string().max(1000).optional(),
-  visibility: z.enum(["PUBLIC", "PRIVATE", "UNLISTED"]).default("PRIVATE")
+  visibility: z.enum(["PUBLIC", "PRIVATE", "UNLISTED"]).default("PRIVATE"),
+  tags: z.string().max(800, "Tags must be shorter than 800 characters.").optional()
 });
 
 export const photoMetadataSchema = z.object({

@@ -26,7 +26,8 @@ export function UploadZone() {
   } = useForm<UploadFormValues>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
-      visibility: "PRIVATE"
+      visibility: "PRIVATE",
+      tags: ""
     }
   });
 
@@ -76,7 +77,11 @@ export function UploadZone() {
           file: selectedFile,
           title: values.title,
           description: values.description,
-          visibility: values.visibility
+          visibility: values.visibility,
+          tags: values.tags
+            ?.split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
         },
         token
       );
@@ -141,6 +146,16 @@ export function UploadZone() {
             {...register("description")}
           />
           {errors.description ? <span className="text-sm text-red-600">{errors.description.message}</span> : null}
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-slate-700">Tags</span>
+          <input
+            className="focus-ring mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+            placeholder="nature, travel, sunset"
+            {...register("tags")}
+          />
+          <span className="mt-1 block text-xs text-slate-500">Separate tags with commas.</span>
+          {errors.tags ? <span className="text-sm text-red-600">{errors.tags.message}</span> : null}
         </label>
         <label className="block">
           <span className="text-sm font-medium text-slate-700">Visibility</span>

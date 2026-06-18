@@ -22,10 +22,12 @@ export const samplePhotos: Photo[] = [
     },
     tags: [
       {
-        id: "tag-nature",
-        name: "Nature",
-        slug: "nature",
-        createdAt: now
+        tag: {
+          id: "tag-nature",
+          name: "Nature",
+          slug: "nature",
+          createdAt: now
+        }
       }
     ],
     createdAt: now,
@@ -50,10 +52,12 @@ export const samplePhotos: Photo[] = [
     },
     tags: [
       {
-        id: "tag-urban",
-        name: "Urban",
-        slug: "urban",
-        createdAt: now
+        tag: {
+          id: "tag-urban",
+          name: "Urban",
+          slug: "urban",
+          createdAt: now
+        }
       }
     ],
     createdAt: now,
@@ -78,10 +82,12 @@ export const samplePhotos: Photo[] = [
     },
     tags: [
       {
-        id: "tag-travel",
-        name: "Travel",
-        slug: "travel",
-        createdAt: now
+        tag: {
+          id: "tag-travel",
+          name: "Travel",
+          slug: "travel",
+          createdAt: now
+        }
       }
     ],
     createdAt: now,

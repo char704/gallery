@@ -20,6 +20,8 @@ export default function PhotoDetail() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("PRIVATE");
+  const [tagText, setTagText] = useState("");
+  const [isEditingTags, setIsEditingTags] = useState(false);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isOwner = Boolean(user && photo && user.id === photo.userId);
 
@@ -34,6 +36,7 @@ export default function PhotoDetail() {
       setTitle(photo.title);
       setDescription(photo.description ?? "");
       setVisibility(photo.visibility);
+      setTagText(photo.tags?.map((photoTag) => photoTag.tag.name).join(", ") ?? "");
     }
   }, [photo]);
 
@@ -71,6 +74,28 @@ export default function PhotoDetail() {
       setDeleteConfirmOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["photos"] });
       navigate("/gallery", { replace: true });
+    }
+  });
+
+  const updateTagsMutation = useMutation({
+    mutationFn: () => {
+      if (!photo || !token) {
+        throw new Error("You must be logged in to update tags.");
+      }
+
+      return photoService.updatePhotoTags(
+        photo.id,
+        tagText
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        token
+      );
+    },
+    onSuccess: async () => {
+      setIsEditingTags(false);
+      await queryClient.invalidateQueries({ queryKey: ["photos", photoId] });
+      await queryClient.invalidateQueries({ queryKey: ["photos"] });
     }
   });
 
@@ -211,6 +236,60 @@ export default function PhotoDetail() {
               {deleteMutation.error ? (
                 <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{deleteMutation.error.message}</p>
               ) : null}
+              <div className="mt-5 border-t border-slate-200 pt-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-semibold uppercase text-slate-500">Tags</h2>
+                  {isOwner ? (
+                    <button
+                      className="focus-ring rounded-lg px-2 py-1 text-sm font-semibold text-pine"
+                      type="button"
+                      onClick={() => {
+                        setTagText(photo.tags?.map((photoTag) => photoTag.tag.name).join(", ") ?? "");
+                        setIsEditingTags((current) => !current);
+                      }}
+                    >
+                      {isEditingTags ? "Cancel" : "Edit tags"}
+                    </button>
+                  ) : null}
+                </div>
+                {isEditingTags ? (
+                  <div className="mt-3 space-y-3">
+                    <input
+                      className="focus-ring w-full rounded-lg border border-slate-300 px-3 py-2"
+                      value={tagText}
+                      onChange={(event) => setTagText(event.target.value)}
+                      placeholder="nature, travel, sunset"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="focus-ring rounded-lg bg-pine px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                        type="button"
+                        onClick={() => updateTagsMutation.mutate()}
+                        disabled={updateTagsMutation.isPending}
+                      >
+                        {updateTagsMutation.isPending ? "Saving..." : "Save tags"}
+                      </button>
+                    </div>
+                    {updateTagsMutation.error ? (
+                      <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{updateTagsMutation.error.message}</p>
+                    ) : null}
+                  </div>
+                ) : photo.tags?.length ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {photo.tags.map((photoTag) => (
+                      <Link
+                        className="focus-ring rounded-lg bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+                        key={photoTag.tag.id}
+                        to={`/explore?tag=${encodeURIComponent(photoTag.tag.slug)}`}
+                      >
+                        #{photoTag.tag.name}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-500">No tags yet.</p>
+                )}
+              </div>
             </>
           )}
         </div>

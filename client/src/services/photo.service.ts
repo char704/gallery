@@ -58,6 +58,7 @@ export const photoService = {
     formData.append("title", payload.title);
     formData.append("description", payload.description ?? "");
     formData.append("visibility", payload.visibility);
+    formData.append("tags", JSON.stringify(payload.tags ?? []));
 
     return apiRequest<Photo>("/photos", {
       method: "POST",
@@ -78,6 +79,16 @@ export const photoService = {
     return apiRequest<Photo>(`/photos/${photoId}`, {
       method: "PATCH",
       body: data,
+      token
+    });
+  },
+
+  updatePhotoTags(photoId: string, tags: string[], token: string): Promise<Photo> {
+    return apiRequest<Photo>(`/photos/${photoId}/tags`, {
+      method: "PATCH",
+      body: {
+        tags
+      },
       token
     });
   },
