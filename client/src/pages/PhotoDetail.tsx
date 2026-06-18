@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { ConfirmDialog } from "../components/Common/ConfirmDialog";
 import { LoadingSpinner } from "../components/Common/LoadingSpinner";
 import { photoService } from "../services/photo.service";
 import { useAuthStore } from "../store/authStore";
@@ -18,6 +19,7 @@ export default function PhotoDetail() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("PRIVATE");
+  const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isOwner = Boolean(user && photo && user.id === photo.userId);
 
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function PhotoDetail() {
       return photoService.deletePhoto(photo.id, token);
     },
     onSuccess: async () => {
+      setDeleteConfirmOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["photos"] });
       navigate("/gallery", { replace: true });
     }
@@ -163,7 +166,7 @@ export default function PhotoDetail() {
                     <button
                       className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60"
                       type="button"
-                      onClick={() => deleteMutation.mutate()}
+                      onClick={() => setDeleteConfirmOpen(true)}
                       disabled={deleteMutation.isPending}
                     >
                       {deleteMutation.isPending ? "Deleting..." : "Delete"}
@@ -178,6 +181,17 @@ export default function PhotoDetail() {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        title="Delete Photo"
+        message="Are you sure you want to delete this photo? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous
+        isLoading={deleteMutation.isPending}
+        onConfirm={() => deleteMutation.mutate()}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
     </section>
   );
 }
