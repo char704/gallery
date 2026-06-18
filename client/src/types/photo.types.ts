@@ -72,6 +72,17 @@ export interface SearchQueryParams extends PhotoQueryParams {
   userId?: string;
 }
 
+export interface SearchSuggestion {
+  type: "photo" | "tag";
+  id: string;
+  label: string;
+  value: string;
+}
+
+export interface TrendingTag extends Tag {
+  photoCount: number;
+}
+
 export interface PhotoListResult {
   photos: Photo[];
   total: number;

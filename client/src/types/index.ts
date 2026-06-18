@@ -21,7 +21,9 @@ export type {
   PhotoListResult,
   PhotoQueryParams,
   SearchQueryParams,
+  SearchSuggestion,
   Tag,
+  TrendingTag,
   UploadPhotoPayload,
   Visibility
 } from "./photo.types";
