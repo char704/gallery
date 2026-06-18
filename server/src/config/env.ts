@@ -2,10 +2,19 @@ import { config as loadDotenv } from "dotenv";
 import path from "path";
 import { z } from "zod";
 
-if (process.env.NODE_ENV !== "production") {
+const currentNodeEnv = process.env.NODE_ENV ?? "development";
+
+if (currentNodeEnv !== "production") {
   loadDotenv({
     path: path.resolve(process.cwd(), ".env")
   });
+
+  if (currentNodeEnv === "test") {
+    loadDotenv({
+      path: path.resolve(process.cwd(), ".env.test"),
+      override: true
+    });
+  }
 }
 
 const rawEnvSchema = z.object({
