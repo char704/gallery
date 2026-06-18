@@ -1,6 +1,21 @@
 import type { ApiResponse } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
+function getApiBaseUrl(): string {
+  const url = import.meta.env.VITE_API_BASE_URL as string | undefined;
+
+  if (!url) {
+    if (import.meta.env.DEV) {
+      console.warn("VITE_API_BASE_URL not set, using localhost fallback.");
+      return "http://localhost:5000/api";
+    }
+
+    throw new Error("VITE_API_BASE_URL environment variable is not set. Check Vercel project settings.");
+  }
+
+  return url.trim().replace(/\/+$/, "");
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 export class ApiClientError extends Error {
   constructor(
