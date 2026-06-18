@@ -15,6 +15,8 @@ export type {
 } from "./auth.types";
 export type {
   Album,
+  AlbumDetail,
+  AlbumListResult,
   Photo,
   PhotoListResult,
   PhotoQueryParams,

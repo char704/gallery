@@ -1,32 +1,155 @@
 import type { RequestHandler } from "express";
+import { albumService } from "../services/album.service";
+import { AppError } from "../utils/errorHandler";
 import { successResponse } from "../utils/responseFormatter";
 
+function parsePage(value: unknown, fallback: number) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export const albumController = {
-  list: ((_req, res) => {
-    res.json(successResponse({ items: [], meta: { page: 1, limit: 24, total: 0, totalPages: 0 } }));
+  list: (async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new AppError("Unauthorized - No token provided.", 401, "UNAUTHORIZED");
+      }
+
+      const page = parsePage(req.query.page, 1);
+      const limit = parsePage(req.query.limit, 12);
+      const result = await albumService.getUserAlbums(req.user.id, page, limit, true);
+
+      res.json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
-  create: ((_req, res) => {
-    res.status(501).json(successResponse({ implemented: false }, "Album creation scaffold ready."));
+  publicList: (async (req, res, next) => {
+    try {
+      const page = parsePage(req.query.page, 1);
+      const limit = parsePage(req.query.limit, 12);
+      const result = await albumService.getPublicAlbums(page, limit);
+
+      res.json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
-  detail: ((req, res) => {
-    res.json(successResponse({ id: req.params.id, implemented: false }));
+  userAlbums: (async (req, res, next) => {
+    try {
+      const page = parsePage(req.query.page, 1);
+      const limit = parsePage(req.query.limit, 12);
+      const result = await albumService.getUserAlbums(req.params.userId, page, limit, false);
+
+      res.json(successResponse(result));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
-  update: ((req, res) => {
-    res.status(501).json(successResponse({ id: req.params.id, implemented: false }, "Album update scaffold ready."));
+  create: (async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new AppError("Unauthorized - No token provided.", 401, "UNAUTHORIZED");
+      }
+
+      const { name, description, visibility } = req.body as {
+        name: string;
+        description?: string;
+        visibility?: string;
+      };
+      const album = await albumService.createAlbum(
+        req.user.id,
+        name,
+        description ?? null,
+        albumService.parseVisibility(visibility)
+      );
+
+      res.status(201).json(successResponse(album, "Album created."));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
-  remove: ((req, res) => {
-    res.status(501).json(successResponse({ id: req.params.id, implemented: false }, "Album delete scaffold ready."));
+  detail: (async (req, res, next) => {
+    try {
+      const album = await albumService.getAlbumById(req.params.id, req.user?.id);
+
+      res.json(successResponse(album));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
-  addPhoto: ((req, res) => {
-    res.status(501).json(successResponse({ albumId: req.params.id, implemented: false }, "Add photo scaffold ready."));
+  update: (async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new AppError("Unauthorized - No token provided.", 401, "UNAUTHORIZED");
+      }
+
+      const { name, description, visibility, coverPhotoId } = req.body as {
+        name?: string;
+        description?: string | null;
+        visibility?: string;
+        coverPhotoId?: string | null;
+      };
+      const album = await albumService.updateAlbum(req.params.id, req.user.id, {
+        name,
+        description,
+        visibility,
+        coverPhotoId
+      });
+
+      res.json(successResponse(album, "Album updated."));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler,
 
-  removePhoto: ((req, res) => {
-    res.status(501).json(successResponse({ albumId: req.params.id, photoId: req.params.photoId, implemented: false }, "Remove photo scaffold ready."));
+  remove: (async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new AppError("Unauthorized - No token provided.", 401, "UNAUTHORIZED");
+      }
+
+      await albumService.deleteAlbum(req.params.id, req.user.id);
+      res.json(successResponse({ deleted: true }, "Album deleted."));
+    } catch (error) {
+      next(error);
+    }
+  }) satisfies RequestHandler,
+
+  addPhoto: (async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new AppError("Unauthorized - No token provided.", 401, "UNAUTHORIZED");
+      }
+
+      const { photoId } = req.body as { photoId?: string };
+
+      if (!photoId) {
+        throw new AppError("Photo id is required.", 400, "PHOTO_ID_REQUIRED");
+      }
+
+      const albumPhoto = await albumService.addPhotoToAlbum(req.params.id, photoId, req.user.id);
+      res.status(201).json(successResponse(albumPhoto, "Photo added to album."));
+    } catch (error) {
+      next(error);
+    }
+  }) satisfies RequestHandler,
+
+  removePhoto: (async (req, res, next) => {
+    try {
+      if (!req.user) {
+        throw new AppError("Unauthorized - No token provided.", 401, "UNAUTHORIZED");
+      }
+
+      await albumService.removePhotoFromAlbum(req.params.id, req.params.photoId, req.user.id);
+      res.json(successResponse({ removed: true }, "Photo removed from album."));
+    } catch (error) {
+      next(error);
+    }
   }) satisfies RequestHandler
 };

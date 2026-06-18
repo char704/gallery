@@ -39,9 +39,24 @@ export interface Album {
   coverPhoto?: Photo | null;
   visibility: Visibility;
   userId: string;
+  user?: Pick<User, "id" | "name" | "avatarUrl">;
   photoCount?: number;
+  _count?: {
+    photos: number;
+  };
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AlbumDetail extends Album {
+  photos: Photo[];
+}
+
+export interface AlbumListResult {
+  albums: Album[];
+  total: number;
+  page: number;
+  pages: number;
 }
 
 export interface PhotoQueryParams {
