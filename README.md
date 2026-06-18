@@ -1,18 +1,31 @@
-# FrameHub
+# FrameHub - Deployed Full-Stack Photo Gallery MVP
 
-FrameHub is a production-ready full-stack photo gallery platform for uploading, organizing, and sharing photos.
+FrameHub is a working full-stack photo gallery app. Users can register, upload images to Cloudinary, organize photos into albums, search public photos, like and comment, and manage private/public visibility.
+
+This is best described as a deployed MVP: the main product flows work end to end, with CI, integration tests, production env validation, and deployment docs. Future hardening still includes HttpOnly refresh-token cookies, richer moderation, and deeper observability.
 
 - Live app: https://gallery-ebon-six.vercel.app/
 - Backend API: https://gallery-39ia.onrender.com/
 - Health check: https://gallery-39ia.onrender.com/health
 - Repository: https://github.com/char704/gallery
 
+## Status
+
+- Authentication: register, login, `/api/auth/me`, persisted client sessions
+- Photo management: upload, edit, delete, Cloudinary cleanup, UUID public IDs
+- Albums: create, list, view, delete, add/remove photos, privacy controls
+- Search: title/description/tag search, suggestions, trending tags, pagination
+- Discovery: public gallery, tag filtering, latest/oldest/popular sorting
+- Engagement: like/unlike, like counts, paginated comments
+- Security basics: CORS allowlist, ownership checks, input validation, fail-fast production env validation
+- Quality: Vitest, React Testing Library, Supertest integration tests, GitHub Actions CI
+
 ## Tech Stack
 
 - Client: React 18, Vite, TypeScript, Tailwind CSS, React Router, TanStack Query, Zustand
 - Server: Node.js 20, Express, TypeScript, Prisma, PostgreSQL, JWT auth
-- Storage: Cloudinary image uploads with UUID public IDs under per-user folders
-- Testing: Vitest, React Testing Library, Supertest-ready integration tests
+- Storage: Cloudinary image uploads under `framehub/{userId}/{uuid}`
+- Testing: Vitest, React Testing Library, Supertest
 - Deployment: Vercel frontend, Render backend
 
 ## Architecture
@@ -23,64 +36,11 @@ flowchart LR
   Client -->|"HTTPS /api"| Server["Express API on Render"]
   Server -->|"Prisma"| DB["PostgreSQL"]
   Server -->|"Upload/delete images"| Cloudinary["Cloudinary"]
-```
-
-## Working Features
-
-- Register and login with email/password validation and bcrypt password hashing.
-- JWT-based protected routes with persisted client sessions.
-- `/api/auth/me` session hydration after browser refresh.
-- Authenticated photo upload to Cloudinary with MIME/signature validation.
-- UUID-based Cloudinary public IDs in `framehub/{userId}/{uuid}` to prevent collisions.
-- Photo metadata persisted in PostgreSQL through Prisma.
-- Personal gallery with pagination at `/gallery`.
-- Public gallery with pagination at `/explore`.
-- Home page recent photos loaded from the live API.
-- Photo detail page with owner-only edit/delete actions and delete confirmation.
-- Integration tests for auth, photo authorization, and privacy behavior.
-
-## Project Structure
-
-```text
-framehub/
-|-- client/
-|   |-- public/
-|   |-- src/
-|   |   |-- components/
-|   |   |-- hooks/
-|   |   |-- pages/
-|   |   |-- services/
-|   |   |-- store/
-|   |   |-- test/
-|   |   |-- types/
-|   |   `-- utils/
-|   |-- .env.example
-|   |-- package.json
-|   |-- vercel.json
-|   `-- vite.config.ts
-|-- server/
-|   |-- prisma/
-|   |   `-- schema.prisma
-|   |-- src/
-|   |   |-- __tests__/
-|   |   |-- config/
-|   |   |-- controllers/
-|   |   |-- middlewares/
-|   |   |-- routes/
-|   |   |-- services/
-|   |   |-- types/
-|   |   |-- utils/
-|   |   `-- validators/
-|   |-- .env.example
-|   |-- package.json
-|   `-- tsconfig.json
-|-- DEPLOYMENT.md
-`-- README.md
+  GitHub["GitHub Actions"] -->|"test/typecheck/build"| Client
+  GitHub -->|"test/typecheck/build"| Server
 ```
 
 ## Local Setup
-
-Install dependencies in each app:
 
 ```bash
 cd client
@@ -90,14 +50,14 @@ cd ../server
 npm install
 ```
 
-Create local environment files from the examples:
+Create local env files:
 
 ```bash
 cp client/.env.example client/.env
 cp server/.env.example server/.env
 ```
 
-Generate Prisma Client and prepare the local database:
+Prepare the database:
 
 ```bash
 cd server
@@ -118,36 +78,39 @@ npm run dev
 Default local URLs:
 
 - Client: http://localhost:5173
-- Server health check: http://localhost:5000/health
+- Server health: http://localhost:5000/health
 
-## Environment Variables
+## Environment
 
 Client:
 
 ```env
-VITE_API_BASE_URL=https://gallery-39ia.onrender.com/api
+VITE_API_BASE_URL=http://localhost:5000/api
 VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
 ```
 
 Server:
 
 ```env
-DATABASE_URL=postgresql://...
+NODE_ENV=development
+DATABASE_URL=postgresql://user:password@localhost:5432/framehub
 JWT_SECRET=use_a_strong_32_plus_character_secret
 JWT_EXPIRY=7d
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
-NODE_ENV=production
 PORT=5000
-CORS_ORIGIN=https://gallery-ebon-six.vercel.app
+CORS_ORIGIN=http://localhost:5173
 MAX_FILE_SIZE=5242880
 MAX_FILES_PER_REQUEST=10
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
+LOG_LEVEL=info
 ```
 
-Do not commit real `.env` files. Use the `.env.example` files for public documentation only.
+For test databases, copy `server/.env.test.example` to `server/.env.test` and point `DATABASE_URL` at a disposable PostgreSQL database. CI uses `framehub_test`.
+
+Never commit real `.env`, `.env.local`, database URLs, JWT secrets, or Cloudinary secrets.
 
 ## API Overview
 
@@ -160,17 +123,42 @@ Authentication:
 
 Photos:
 
-- `GET /api/photos` for public photos
-- `GET /api/photos/feed` for the authenticated user's photos
+- `GET /api/photos?page=&limit=&tag=&sort=`
+- `GET /api/photos/feed`
 - `POST /api/photos` with multipart field `image`
 - `GET /api/photos/:id`
 - `PATCH /api/photos/:id`
 - `DELETE /api/photos/:id`
-- `GET /api/photos/user/:userId`
+- `POST /api/photos/:photoId/like`
+- `DELETE /api/photos/:photoId/like`
+- `GET /api/photos/:photoId/likes`
+- `GET /api/photos/:photoId/comments`
+- `POST /api/photos/:photoId/comments`
+
+Albums:
+
+- `GET /api/albums`
+- `GET /api/albums/public`
+- `GET /api/albums/user/:userId`
+- `POST /api/albums`
+- `GET /api/albums/:id`
+- `PATCH /api/albums/:id`
+- `DELETE /api/albums/:id`
+- `POST /api/albums/:id/photos`
+- `DELETE /api/albums/:id/photos/:photoId`
+
+Search:
+
+- `GET /api/search?q=&tag=&sort=&page=&limit=`
+- `GET /api/search/suggestions?q=`
+- `GET /api/search/tags`
+
+Comments:
+
+- `PATCH /api/comments/:commentId`
+- `DELETE /api/comments/:commentId`
 
 ## Verification
-
-Run these checks before pushing:
 
 ```bash
 cd client
@@ -184,6 +172,13 @@ npm test
 npm run build
 ```
 
+Server coverage:
+
+```bash
+cd server
+npm run test:coverage
+```
+
 Production smoke checks:
 
 ```bash
@@ -193,8 +188,15 @@ curl -I https://gallery-ebon-six.vercel.app/login
 
 ## Demo Account
 
-Use the live registration flow to create a disposable demo account. Shared demo passwords are intentionally not committed to source; for a portfolio walkthrough, keep demo credentials in a private note or reset them before sharing.
+Use the live registration flow to create a disposable account. Shared demo credentials are intentionally not committed; keep any demo account password in a private note and rotate it before sharing publicly.
 
 ## Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the Render and Vercel configuration checklist.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for Render/Vercel setup, env variables, CORS notes, and post-deploy checks.
+
+## Roadmap
+
+- Move auth tokens to HttpOnly refresh-token cookies.
+- Add moderation/admin tools for public content.
+- Add richer profile/follow feeds and notifications.
+- Add image metadata views and advanced search facets.
