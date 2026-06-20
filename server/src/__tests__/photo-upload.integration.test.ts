@@ -8,6 +8,7 @@ import { photoService } from "../services/photo.service";
 
 const app = createApp();
 const runId = `upload-${Date.now()}`;
+const tagRunId = runId.replace(/\D/g, "").slice(-8);
 const pngBuffer = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
   "base64"
@@ -54,6 +55,13 @@ async function cleanup() {
           }
         }
       ]
+    }
+  });
+  await prisma.tag.deleteMany({
+    where: {
+      slug: {
+        contains: tagRunId
+      }
     }
   });
   await prisma.user.deleteMany({
@@ -138,6 +146,67 @@ describe("Photo upload integration", () => {
 
     expect(filtered.status).toBe(200);
     expect(filtered.body.data.photos.some((photo: { id: string }) => photo.id === response.body.data.id)).toBe(true);
+  });
+
+  it("maps tag inputs with matching slugs to one tag", async () => {
+    const { token } = await createSession("tag-collision");
+    const spacedName = `new york ${tagRunId}`;
+    const slugName = `new-york-${tagRunId}`;
+
+    const response = await request(app)
+      .post("/api/photos")
+      .set("Authorization", `Bearer ${token}`)
+      .field("title", `Tag collision ${runId}`)
+      .field("visibility", "PUBLIC")
+      .field("tags", JSON.stringify([spacedName, slugName]))
+      .attach("image", pngBuffer, {
+        filename: `${runId}.png`,
+        contentType: "image/png"
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.tags).toHaveLength(1);
+    expect(response.body.data.tags[0].tag.slug).toBe(slugName);
+
+    const matchingTags = await prisma.tag.findMany({
+      where: {
+        slug: slugName
+      }
+    });
+    expect(matchingTags).toHaveLength(1);
+  });
+
+  it("returns search result tags in the nested photo tag shape", async () => {
+    const { token } = await createSession("search-shape");
+    const tagName = `search ${tagRunId}`;
+
+    const uploadResponse = await request(app)
+      .post("/api/photos")
+      .set("Authorization", `Bearer ${token}`)
+      .field("title", `Searchable ${runId}`)
+      .field("visibility", "PUBLIC")
+      .field("tags", JSON.stringify([tagName]))
+      .attach("image", pngBuffer, {
+        filename: `${runId}.png`,
+        contentType: "image/png"
+      });
+
+    expect(uploadResponse.status).toBe(201);
+
+    const searchResponse = await request(app).get("/api/search").query({
+      q: `Searchable ${runId}`
+    });
+
+    expect(searchResponse.status).toBe(200);
+    const photo = searchResponse.body.data.photos.find((result: { id: string }) => result.id === uploadResponse.body.data.id);
+    expect(photo.tags).toEqual([
+      expect.objectContaining({
+        tag: expect.objectContaining({
+          name: tagName,
+          slug: `search-${tagRunId}`
+        })
+      })
+    ]);
   });
 
   it("rejects uploads without authentication", async () => {

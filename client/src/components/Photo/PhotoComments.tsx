@@ -22,7 +22,7 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
 
   const invalidateComments = () => {
     void queryClient.invalidateQueries({ queryKey: ["comments", photoId] });
-    void queryClient.invalidateQueries({ queryKey: ["photos", photoId] });
+    void queryClient.invalidateQueries({ queryKey: ["photos"] });
   };
 
   const createMutation = useMutation({
