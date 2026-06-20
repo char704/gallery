@@ -28,9 +28,22 @@ function toTransformationString(transformation: CloudinaryTransformation): strin
     .join(",");
 }
 
+export function sanitizeCloudinaryCloudName(value: unknown): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const cloudName = value
+    .trim()
+    .replace(/cloud\s*name/gi, "")
+    .replace(/\s+/g, "");
+
+  return /^[a-zA-Z0-9_-]+$/.test(cloudName) ? cloudName : "";
+}
+
 export const cloudinary = {
   url(publicId: string, options: CloudinaryUrlOptions = {}): string {
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const cloudName = sanitizeCloudinaryCloudName(import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
 
     if (!cloudName || !publicId) {
       return "";

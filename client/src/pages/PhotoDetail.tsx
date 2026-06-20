@@ -7,6 +7,7 @@ import { PhotoComments } from "../components/Photo/PhotoComments";
 import { photoService } from "../services/photo.service";
 import { useAuthStore } from "../store/authStore";
 import { usePhoto } from "../hooks/usePhotos";
+import { cloudinary } from "../utils/cloudinary";
 import type { Visibility } from "../types";
 
 export default function PhotoDetail() {
@@ -125,13 +126,26 @@ export default function PhotoDetail() {
     );
   }
 
+  const displayUrl =
+    cloudinary.url(photo.publicId, {
+      secure: true,
+      transformation: [
+        {
+          width: 1400,
+          crop: "limit",
+          quality: "auto",
+          fetch_format: "auto"
+        }
+      ]
+    }) || photo.imageUrl;
+
   return (
     <section className="space-y-5">
       <Link className="focus-ring rounded-lg text-sm font-semibold text-pine" to="/gallery">
         Back to gallery
       </Link>
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-        <img className="max-h-[70vh] w-full object-cover" src={photo.imageUrl} alt={photo.title} />
+        <img className="max-h-[70vh] w-full object-cover" src={displayUrl} alt={photo.title} />
         <div className="p-5">
           {isEditing ? (
             <form
