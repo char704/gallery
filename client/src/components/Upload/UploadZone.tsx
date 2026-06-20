@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, UploadCloud } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,6 +16,7 @@ const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export function UploadZone() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const token = useAuthStore((state) => state.token);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -86,6 +88,7 @@ export function UploadZone() {
         token
       );
 
+      await queryClient.invalidateQueries({ queryKey: ["photos"] });
       navigate(`/photos/${photo.id}`);
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "Upload failed.");

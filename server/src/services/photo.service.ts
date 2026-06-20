@@ -76,6 +76,10 @@ function toPublicOrderBy(sort: PhotoSort): Prisma.PhotoOrderByWithRelationInput[
   return [{ createdAt: "desc" }];
 }
 
+function toTagSlug(name: string) {
+  return name.replace(/\s+/g, "-");
+}
+
 const photoInclude = {
   user: {
     select: {
@@ -158,7 +162,11 @@ export const photoService = {
     const normalizedTags = tagNames
       .map((tag) => tag.trim().toLowerCase())
       .filter((tag) => tag.length > 0 && tag.length <= 30)
-      .filter((tag, index, self) => self.indexOf(tag) === index)
+      .map((name) => ({
+        name,
+        slug: toTagSlug(name)
+      }))
+      .filter((tag, index, self) => self.findIndex((item) => item.slug === tag.slug) === index)
       .slice(0, 20);
 
     if (!normalizedTags.length) {
@@ -166,15 +174,15 @@ export const photoService = {
     }
 
     return Promise.all(
-      normalizedTags.map((name) =>
+      normalizedTags.map(({ name, slug }) =>
         prisma.tag.upsert({
           where: {
-            name
+            slug
           },
           update: {},
           create: {
             name,
-            slug: name.replace(/\s+/g, "-")
+            slug
           }
         })
       )

@@ -109,7 +109,7 @@ export default function PhotoDetail() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["likes", photoId] });
-      await queryClient.invalidateQueries({ queryKey: ["photos", photoId] });
+      await queryClient.invalidateQueries({ queryKey: ["photos"] });
     }
   });
 

@@ -1,6 +1,7 @@
 import { Eye, Heart, Lock, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Photo, Tag } from "../../types";
+import { cloudinary } from "../../utils/cloudinary";
 
 interface PhotoCardProps {
   photo: Photo;
@@ -10,6 +11,18 @@ interface PhotoCardProps {
 export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
   const VisibilityIcon = photo.visibility === "PUBLIC" ? Eye : Lock;
   const isMasonry = layout === "masonry";
+  const displayUrl =
+    cloudinary.url(photo.publicId, {
+      secure: true,
+      transformation: [
+        {
+          width: 800,
+          crop: "limit",
+          quality: "auto",
+          fetch_format: "auto"
+        }
+      ]
+    }) || photo.imageUrl;
   const tags =
     photo.tags?.map((photoTag) => ("tag" in photoTag ? photoTag.tag : (photoTag as unknown as Tag))) ?? [];
 
@@ -22,7 +35,7 @@ export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
       >
         <img
           className={`${isMasonry ? "h-auto" : "h-full"} w-full object-cover transition duration-500 motion-safe:group-hover:scale-105`}
-          src={isMasonry ? photo.imageUrl : photo.thumbnailUrl}
+          src={isMasonry ? displayUrl : photo.thumbnailUrl}
           alt={photo.title}
           width={photo.width}
           height={photo.height}

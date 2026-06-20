@@ -72,8 +72,19 @@ const searchPhotoInclude = {
   }
 } satisfies Prisma.PhotoInclude;
 
+type SearchPhoto = Prisma.PhotoGetPayload<{
+  include: typeof searchPhotoInclude;
+}>;
+
+interface SearchPhotosResult {
+  photos: SearchPhoto[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
 export const searchService = {
-  async searchPhotos(params: SearchPhotosParams) {
+  async searchPhotos(params: SearchPhotosParams): Promise<SearchPhotosResult> {
     const pagination = normalizePagination(params.page, params.limit);
     const q = normalizeSearchTerm(params.q);
     const tag = normalizeSearchTerm(params.tag);
@@ -153,10 +164,7 @@ export const searchService = {
     ]);
 
     return {
-      photos: photos.map((photo) => ({
-        ...photo,
-        tags: photo.tags.map((photoTag) => photoTag.tag)
-      })),
+      photos,
       total,
       page: pagination.page,
       pages: Math.ceil(total / pagination.limit)
