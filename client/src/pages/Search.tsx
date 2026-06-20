@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { PhotoGrid } from "../components/Gallery/PhotoGrid";
 import { SearchBar } from "../components/Search/SearchBar";
 import { SearchResults } from "../components/Search/SearchResults";
+import { useDebounce } from "../hooks/useDebounce";
 import { searchService } from "../services/search.service";
 import type { SearchQueryParams } from "../types";
 
@@ -13,16 +14,17 @@ export default function Search() {
   const [tag, setTag] = useState("");
   const [sort, setSort] = useState<SortOption>("latest");
   const [page, setPage] = useState(1);
+  const debouncedQuery = useDebounce(query, 350);
 
   const params = useMemo(
     () => ({
-      q: query.trim(),
+      q: debouncedQuery.trim(),
       tag: tag.trim(),
       sort,
       page,
       limit: 12
     }),
-    [page, query, sort, tag]
+    [debouncedQuery, page, sort, tag]
   );
 
   const photosQuery = useQuery({
@@ -32,9 +34,9 @@ export default function Search() {
   });
 
   const suggestionsQuery = useQuery({
-    queryKey: ["search", "suggestions", query],
-    queryFn: () => searchService.suggestions(query.trim(), 6),
-    enabled: query.trim().length >= 2,
+    queryKey: ["search", "suggestions", debouncedQuery],
+    queryFn: () => searchService.suggestions(debouncedQuery.trim(), 6),
+    enabled: debouncedQuery.trim().length >= 2,
     staleTime: 1000 * 60
   });
 
