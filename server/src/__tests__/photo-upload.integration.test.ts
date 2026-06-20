@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../app";
@@ -6,9 +7,13 @@ import { authService } from "../services/auth.service";
 import { cloudinaryService, type UploadedImage } from "../services/cloudinary.service";
 import { photoService } from "../services/photo.service";
 
+function compactUuid() {
+  return Buffer.from(randomUUID().replaceAll("-", ""), "hex").toString("base64url").toLowerCase();
+}
+
 const app = createApp();
-const runId = `upload-${Date.now()}`;
-const tagRunId = runId.replace(/\D/g, "").slice(-8);
+const runId = `upload-${randomUUID()}`;
+const tagRunId = compactUuid();
 const pngBuffer = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
   "base64"
@@ -124,13 +129,17 @@ describe("Photo upload integration", () => {
 
   it("uploads tags and filters public photos by tag", async () => {
     const { token } = await createSession("tags");
+    const natureTag = `n ${tagRunId}`;
+    const travelTag = `t ${tagRunId}`;
+    const natureSlug = `n-${tagRunId}`;
+    const travelSlug = `t-${tagRunId}`;
 
     const response = await request(app)
       .post("/api/photos")
       .set("Authorization", `Bearer ${token}`)
       .field("title", `Tagged ${runId}`)
       .field("visibility", "PUBLIC")
-      .field("tags", JSON.stringify(["Nature", "Travel", "nature"]))
+      .field("tags", JSON.stringify([natureTag, travelTag, natureSlug]))
       .attach("image", pngBuffer, {
         filename: `${runId}.png`,
         contentType: "image/png"
@@ -138,10 +147,10 @@ describe("Photo upload integration", () => {
 
     expect(response.status).toBe(201);
     expect(response.body.data.tags).toHaveLength(2);
-    expect(response.body.data.tags.map((photoTag: { tag: { name: string } }) => photoTag.tag.name)).toEqual(["nature", "travel"]);
+    expect(response.body.data.tags.map((photoTag: { tag: { name: string } }) => photoTag.tag.name)).toEqual([natureTag, travelTag]);
 
     const filtered = await request(app).get("/api/photos").query({
-      tag: "nature"
+      tag: natureSlug
     });
 
     expect(filtered.status).toBe(200);
@@ -150,8 +159,8 @@ describe("Photo upload integration", () => {
 
   it("maps tag inputs with matching slugs to one tag", async () => {
     const { token } = await createSession("tag-collision");
-    const spacedName = `new york ${tagRunId}`;
-    const slugName = `new-york-${tagRunId}`;
+    const spacedName = `ny ${tagRunId}`;
+    const slugName = `ny-${tagRunId}`;
 
     const response = await request(app)
       .post("/api/photos")
@@ -178,7 +187,7 @@ describe("Photo upload integration", () => {
 
   it("returns search result tags in the nested photo tag shape", async () => {
     const { token } = await createSession("search-shape");
-    const tagName = `search ${tagRunId}`;
+    const tagName = `s ${tagRunId}`;
 
     const uploadResponse = await request(app)
       .post("/api/photos")
@@ -203,7 +212,7 @@ describe("Photo upload integration", () => {
       expect.objectContaining({
         tag: expect.objectContaining({
           name: tagName,
-          slug: `search-${tagRunId}`
+          slug: `s-${tagRunId}`
         })
       })
     ]);

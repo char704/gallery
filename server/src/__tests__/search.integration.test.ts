@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../app";
@@ -6,8 +7,8 @@ import { authService } from "../services/auth.service";
 import type { Visibility } from "@prisma/client";
 
 const app = createApp();
-const runId = `search-${Date.now()}`;
-const tagRunId = runId.replace(/\D/g, "").slice(-8);
+const runId = `search-${randomUUID()}`;
+const tagRunId = runId;
 
 function emailFor(name: string) {
   return `${name}.${runId}@example.test`;
