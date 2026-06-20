@@ -1,5 +1,5 @@
 import { Eye, Heart, Lock, MessageCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { Photo, Tag } from "../../types";
 import { cloudinary } from "../../utils/cloudinary";
 
@@ -9,6 +9,7 @@ interface PhotoCardProps {
 }
 
 export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
+  const location = useLocation();
   const VisibilityIcon = photo.visibility === "PUBLIC" ? Eye : Lock;
   const isMasonry = layout === "masonry";
   const displayUrl =
@@ -31,6 +32,7 @@ export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
       <Link
         className={`focus-ring block w-full overflow-hidden ${isMasonry ? "" : "aspect-[4/3]"}`}
         to={`/photos/${photo.id}`}
+        state={{ backgroundLocation: location }}
         aria-label={`Open ${photo.title}`}
       >
         <img
@@ -49,7 +51,11 @@ export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
       </span>
       <div className="absolute inset-x-0 bottom-0 space-y-3 p-3 opacity-100 transition duration-300 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
         <div className="rounded-xl border border-white/30 bg-white/20 p-3 text-white shadow-soft backdrop-blur-xl">
-          <Link className="focus-ring block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light" to={`/photos/${photo.id}`}>
+          <Link
+            className="focus-ring block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light"
+            to={`/photos/${photo.id}`}
+            state={{ backgroundLocation: location }}
+          >
             {photo.title}
           </Link>
           {photo.description ? <p className="mt-1 line-clamp-2 text-sm leading-5 text-white/80">{photo.description}</p> : null}
