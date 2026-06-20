@@ -102,16 +102,14 @@ describe("Search integration", () => {
       }
     });
 
-    await Promise.all([
-      createTaggedPhoto(privateOnlyTag.id, "PRIVATE", 1),
-      createTaggedPhoto(privateOnlyTag.id, "PRIVATE", 2),
-      createTaggedPhoto(privateOnlyTag.id, "UNLISTED", 3),
-      createTaggedPhoto(unlistedOnlyTag.id, "UNLISTED", 4),
-      createTaggedPhoto(publicTag.id, "PUBLIC", 5),
-      createTaggedPhoto(mixedTag.id, "PUBLIC", 6),
-      createTaggedPhoto(mixedTag.id, "PRIVATE", 7),
-      createTaggedPhoto(mixedTag.id, "UNLISTED", 8)
-    ]);
+    await createTaggedPhoto(privateOnlyTag.id, "PRIVATE", 1);
+    await createTaggedPhoto(privateOnlyTag.id, "PRIVATE", 2);
+    await createTaggedPhoto(privateOnlyTag.id, "UNLISTED", 3);
+    await createTaggedPhoto(unlistedOnlyTag.id, "UNLISTED", 4);
+    await createTaggedPhoto(publicTag.id, "PUBLIC", 5);
+    await createTaggedPhoto(mixedTag.id, "PUBLIC", 6);
+    await createTaggedPhoto(mixedTag.id, "PRIVATE", 7);
+    await createTaggedPhoto(mixedTag.id, "UNLISTED", 8);
 
     const suggestionsResponse = await request(app).get("/api/search/suggestions").query({
       q: `leak ${tagRunId}`,
