@@ -1,4 +1,4 @@
-import { FolderOpen, Home, Images, Settings, Telescope } from "lucide-react";
+import { FolderOpen, Home, Images, Telescope } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useUiStore } from "../../store/uiStore";
 
@@ -6,8 +6,7 @@ const links = [
   { to: "/", label: "Home", icon: Home },
   { to: "/explore", label: "Explore", icon: Telescope },
   { to: "/gallery", label: "My Gallery", icon: Images },
-  { to: "/albums", label: "Albums", icon: FolderOpen },
-  { to: "/settings", label: "Settings", icon: Settings }
+  { to: "/albums", label: "Albums", icon: FolderOpen }
 ] as const;
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>

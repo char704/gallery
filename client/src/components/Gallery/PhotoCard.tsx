@@ -41,7 +41,7 @@ export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
           </Link>
           {photo.description ? <p className="mt-1 line-clamp-2 text-sm leading-5 text-white/80">{photo.description}</p> : null}
           {photo.user ? (
-            <Link className="focus-ring mt-2 inline-flex rounded text-sm font-semibold text-white/85 hover:text-white" to={`/users/${photo.user.id}`}>
+            <Link className="focus-ring mt-2 inline-flex rounded text-sm font-semibold text-white/85 hover:text-white" to={`/users/${photo.user.id}/photos`}>
               by {photo.user.name}
             </Link>
           ) : null}
