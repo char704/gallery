@@ -92,7 +92,11 @@ export default function Search() {
       </div>
 
       <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 md:flex-row md:items-center">
+        <label className="sr-only" htmlFor="search-filter-tag">
+          Filter search results by tag
+        </label>
         <input
+          id="search-filter-tag"
           className="focus-ring min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2"
           value={tag}
           onChange={(event) => {
@@ -101,7 +105,11 @@ export default function Search() {
           }}
           placeholder="Filter by tag"
         />
+        <label className="sr-only" htmlFor="search-filter-sort">
+          Sort search results
+        </label>
         <select
+          id="search-filter-sort"
           className="focus-ring rounded-lg border border-slate-300 px-3 py-2"
           value={sort}
           onChange={(event) => {
