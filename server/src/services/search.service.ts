@@ -31,24 +31,33 @@ function normalizeSearchTerm(value: unknown): string | undefined {
   return term.length > 0 ? term : undefined;
 }
 
-function toOrderBy(sort: SearchSort = "latest"): Prisma.PhotoOrderByWithRelationInput {
+function toOrderBy(sort: SearchSort = "latest"): Prisma.PhotoOrderByWithRelationInput[] {
   if (sort === "oldest") {
-    return {
-      createdAt: "asc"
-    };
+    return [
+      {
+        createdAt: "asc"
+      }
+    ];
   }
 
   if (sort === "popular") {
-    return {
-      likes: {
-        _count: "desc"
+    return [
+      {
+        likes: {
+          _count: "desc"
+        }
+      },
+      {
+        createdAt: "desc"
       }
-    };
+    ];
   }
 
-  return {
-    createdAt: "desc"
-  };
+  return [
+    {
+      createdAt: "desc"
+    }
+  ];
 }
 
 const searchPhotoInclude = {
@@ -71,6 +80,16 @@ const searchPhotoInclude = {
     }
   }
 } satisfies Prisma.PhotoInclude;
+
+const publicTagWhere = {
+  photos: {
+    some: {
+      photo: {
+        visibility: "PUBLIC"
+      }
+    }
+  }
+} satisfies Prisma.TagWhereInput;
 
 type SearchPhoto = Prisma.PhotoGetPayload<{
   include: typeof searchPhotoInclude;
@@ -199,6 +218,7 @@ export const searchService = {
       }),
       prisma.tag.findMany({
         where: {
+          ...publicTagWhere,
           OR: [
             {
               name: {
@@ -245,6 +265,7 @@ export const searchService = {
   async getTrendingTags(limit = 12) {
     const safeLimit = Math.min(Math.max(limit, 1), 30);
     const tags = await prisma.tag.findMany({
+      where: publicTagWhere,
       orderBy: {
         photos: {
           _count: "desc"
@@ -253,7 +274,13 @@ export const searchService = {
       include: {
         _count: {
           select: {
-            photos: true
+            photos: {
+              where: {
+                photo: {
+                  visibility: "PUBLIC"
+                }
+              }
+            }
           }
         }
       },
