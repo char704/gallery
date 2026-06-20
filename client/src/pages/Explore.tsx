@@ -40,6 +40,13 @@ export default function Explore() {
   }, [urlTag]);
 
   useEffect(() => {
+    const currentTag = searchParams.get("tag") ?? "";
+
+    // Prevent resetting if the tag hasn't actually changed
+    if (debouncedTag === currentTag) {
+      return;
+    }
+
     const nextParams = new URLSearchParams(searchParams);
 
     if (debouncedTag) {
@@ -48,14 +55,10 @@ export default function Explore() {
       nextParams.delete("tag");
     }
 
-    if (page !== 1) {
-      nextParams.set("page", "1");
-    }
-
-    if (nextParams.toString() !== searchParams.toString()) {
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [debouncedTag, page, searchParams, setSearchParams]);
+    // Reset to page 1 only because the filter tag changed
+    nextParams.delete("page");
+    setSearchParams(nextParams, { replace: true });
+  }, [debouncedTag, searchParams, setSearchParams]);
 
   function updateParams(updates: { tag?: string; sort?: NonNullable<PhotoQueryParams["sort"]>; page?: number }) {
     const nextParams = new URLSearchParams(searchParams);
