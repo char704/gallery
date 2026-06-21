@@ -109,7 +109,7 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
         {!commentsQuery.isLoading && comments.length === 0 ? <p className="py-4 text-sm text-slate-500">No comments yet.</p> : null}
       </div>
 
-      {comments.length > 0 ? (
+      {pages > 1 ? (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
           <button
             className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
