@@ -1,8 +1,9 @@
 import type React from "react";
-import { screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PhotoViewerModal } from "./PhotoViewerModal";
 import { usePhoto } from "../../hooks/usePhotos";
 import { photoService } from "../../services/photo.service";
@@ -32,7 +33,10 @@ vi.mock("../../services/photo.service", () => ({
     unlikePhoto: vi.fn(),
     getComments: vi.fn(),
     createComment: vi.fn(),
-    deleteComment: vi.fn()
+    deleteComment: vi.fn(),
+    updatePhoto: vi.fn(),
+    updatePhotoTags: vi.fn(),
+    deletePhoto: vi.fn()
   }
 }));
 
@@ -99,6 +103,33 @@ function renderViewer() {
     {
       initialEntries: ["/photos/photo-1"]
     }
+  );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+
+  return <output data-testid="location">{location.pathname}</output>;
+}
+
+function renderViewerWithHistory() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false
+      }
+    }
+  });
+
+  render(
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={["/explore", "/photos/photo-1"]} initialIndex={1}>
+        <Routes>
+          <Route path="/photos/:photoId" element={<PhotoViewerModal />} />
+          <Route path="/explore" element={<LocationProbe />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -179,6 +210,150 @@ describe("PhotoViewerModal", () => {
     expect(mockPhotoService.createComment).toHaveBeenCalledWith("photo-1", "Beautiful frame", "token-1");
     await waitFor(() => {
       expect(screen.getByText("Beautiful frame")).toBeInTheDocument();
+    });
+  });
+
+  it("shows owner controls only to the photo owner", async () => {
+    mockPhotoService.getComments.mockResolvedValue({
+      comments: [],
+      total: 0,
+      page: 1,
+      pages: 0
+    });
+    useAuthStore.getState().setSession({
+      user: sampleUser,
+      token: "token-1"
+    });
+
+    renderViewer();
+
+    expect(await screen.findByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+
+    useAuthStore.getState().clearSession();
+    mockUsePhoto.mockReturnValue({
+      data: {
+        ...samplePhoto,
+        userId: "user-3"
+      },
+      isLoading: false,
+      isError: false,
+      error: null
+    } as unknown as ReturnType<typeof usePhoto>);
+
+    renderViewer();
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("updates photo metadata in the modal and exits edit mode on success", async () => {
+    const user = userEvent.setup();
+    useAuthStore.getState().setSession({
+      user: sampleUser,
+      token: "token-1"
+    });
+    mockPhotoService.getComments.mockResolvedValue({
+      comments: [],
+      total: 0,
+      page: 1,
+      pages: 0
+    });
+    mockPhotoService.updatePhoto.mockResolvedValue({
+      ...samplePhoto,
+      title: "Updated image",
+      description: "Updated description",
+      visibility: "UNLISTED"
+    });
+
+    renderViewer();
+
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    await user.clear(screen.getByLabelText("Title"));
+    await user.type(screen.getByLabelText("Title"), "Updated image");
+    await user.clear(screen.getByLabelText("Description"));
+    await user.type(screen.getByLabelText("Description"), "Updated description");
+    await user.selectOptions(screen.getByLabelText("Visibility"), "UNLISTED");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(mockPhotoService.updatePhoto).toHaveBeenCalledWith(
+      "photo-1",
+      {
+        title: "Updated image",
+        description: "Updated description",
+        visibility: "UNLISTED"
+      },
+      "token-1"
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Save changes" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("updates photo tags in the modal and exits tag edit mode on success", async () => {
+    const user = userEvent.setup();
+    useAuthStore.getState().setSession({
+      user: sampleUser,
+      token: "token-1"
+    });
+    mockPhotoService.getComments.mockResolvedValue({
+      comments: [],
+      total: 0,
+      page: 1,
+      pages: 0
+    });
+    mockPhotoService.updatePhotoTags.mockResolvedValue({
+      ...samplePhoto,
+      tags: [
+        {
+          tag: {
+            id: "tag-1",
+            name: "nature",
+            slug: "nature",
+            createdAt: "2026-06-20T00:00:00.000Z"
+          }
+        }
+      ]
+    });
+
+    renderViewer();
+
+    await user.click(await screen.findByRole("button", { name: "Edit tags" }));
+    await user.type(screen.getByPlaceholderText("nature, travel, sunset"), "nature, travel");
+    await user.click(screen.getByRole("button", { name: "Save tags" }));
+
+    expect(mockPhotoService.updatePhotoTags).toHaveBeenCalledWith("photo-1", ["nature", "travel"], "token-1");
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Save tags" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("deletes a photo from the modal and returns to the background route", async () => {
+    const user = userEvent.setup();
+    useAuthStore.getState().setSession({
+      user: sampleUser,
+      token: "token-1"
+    });
+    mockPhotoService.getComments.mockResolvedValue({
+      comments: [],
+      total: 0,
+      page: 1,
+      pages: 0
+    });
+    mockPhotoService.deletePhoto.mockResolvedValue({ deleted: true });
+
+    renderViewerWithHistory();
+
+    await user.click(await screen.findByRole("button", { name: "Delete" }));
+    const confirmDialog = screen.getByText("Delete Photo").closest('[role="dialog"]');
+    expect(confirmDialog).toBeTruthy();
+    await user.click(within(confirmDialog as HTMLElement).getByRole("button", { name: "Delete" }));
+
+    expect(mockPhotoService.deletePhoto).toHaveBeenCalledWith("photo-1", "token-1");
+    await waitFor(() => {
+      expect(screen.getByTestId("location")).toHaveTextContent("/explore");
     });
   });
 });
