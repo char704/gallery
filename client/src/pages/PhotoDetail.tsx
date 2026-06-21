@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "../components/Common/ConfirmDialog";
 import { LoadingSpinner } from "../components/Common/LoadingSpinner";
 import { PhotoComments } from "../components/Photo/PhotoComments";
 import { PhotoLikeButton } from "../components/Photo/PhotoLikeButton";
-import { photoService } from "../services/photo.service";
-import { useAuthStore } from "../store/authStore";
+import { usePhotoOwnerActions } from "../hooks/usePhotoOwnerActions";
 import { usePhoto } from "../hooks/usePhotos";
 import { cloudinary } from "../utils/cloudinary";
 import type { Visibility } from "../types";
@@ -14,9 +12,6 @@ import type { Visibility } from "../types";
 export default function PhotoDetail() {
   const { photoId } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
   const { data: photo, isLoading, isError, error } = usePhoto(photoId ?? "");
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState("");
@@ -25,7 +20,12 @@ export default function PhotoDetail() {
   const [tagText, setTagText] = useState("");
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const isOwner = Boolean(user && photo && user.id === photo.userId);
+  const { isOwner, updateMutation, updateTagsMutation, deleteMutation } = usePhotoOwnerActions(photo, {
+    onDeleted: () => {
+      setDeleteConfirmOpen(false);
+      navigate("/gallery", { replace: true });
+    }
+  });
 
   useEffect(() => {
     if (photo) {
@@ -35,65 +35,6 @@ export default function PhotoDetail() {
       setTagText(photo.tags?.map((photoTag) => photoTag.tag.name).join(", ") ?? "");
     }
   }, [photo]);
-
-  const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!photo || !token) {
-        throw new Error("You must be logged in to update this photo.");
-      }
-
-      return photoService.updatePhoto(
-        photo.id,
-        {
-          title,
-          description,
-          visibility
-        },
-        token
-      );
-    },
-    onSuccess: async () => {
-      setIsEditing(false);
-      await queryClient.invalidateQueries({ queryKey: ["photos"] });
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => {
-      if (!photo || !token) {
-        throw new Error("You must be logged in to delete this photo.");
-      }
-
-      return photoService.deletePhoto(photo.id, token);
-    },
-    onSuccess: async () => {
-      setDeleteConfirmOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["photos"] });
-      navigate("/gallery", { replace: true });
-    }
-  });
-
-  const updateTagsMutation = useMutation({
-    mutationFn: () => {
-      if (!photo || !token) {
-        throw new Error("You must be logged in to update tags.");
-      }
-
-      return photoService.updatePhotoTags(
-        photo.id,
-        tagText
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-        token
-      );
-    },
-    onSuccess: async () => {
-      setIsEditingTags(false);
-      await queryClient.invalidateQueries({ queryKey: ["photos", photoId] });
-      await queryClient.invalidateQueries({ queryKey: ["photos"] });
-    }
-  });
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -133,7 +74,16 @@ export default function PhotoDetail() {
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                updateMutation.mutate();
+                updateMutation.mutate(
+                  {
+                    title,
+                    description,
+                    visibility
+                  },
+                  {
+                    onSuccess: () => setIsEditing(false)
+                  }
+                );
               }}
             >
               <label className="block">
@@ -249,7 +199,17 @@ export default function PhotoDetail() {
                       <button
                         className="focus-ring rounded-lg bg-pine px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
                         type="button"
-                        onClick={() => updateTagsMutation.mutate()}
+                        onClick={() =>
+                          updateTagsMutation.mutate(
+                            tagText
+                              .split(",")
+                              .map((tag) => tag.trim())
+                              .filter(Boolean),
+                            {
+                              onSuccess: () => setIsEditingTags(false)
+                            }
+                          )
+                        }
                         disabled={updateTagsMutation.isPending}
                       >
                         {updateTagsMutation.isPending ? "Saving..." : "Save tags"}
