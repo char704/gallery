@@ -17,7 +17,7 @@ export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
       secure: true,
       transformation: [
         {
-          width: 800,
+          width: 400,
           crop: "limit",
           quality: "auto",
           fetch_format: "auto"
