@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PhotoGrid } from "../components/Gallery/PhotoGrid";
 import { SearchBar } from "../components/Search/SearchBar";
 import { SearchResults } from "../components/Search/SearchResults";
@@ -9,16 +10,92 @@ import type { SearchQueryParams } from "../types";
 
 type SortOption = NonNullable<SearchQueryParams["sort"]>;
 
+function parsePage(value: string | null) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function parseSort(value: string | null): SortOption {
+  return value === "oldest" || value === "popular" || value === "latest" ? value : "latest";
+}
+
 export default function Search() {
-  const [query, setQuery] = useState("");
-  const [tag, setTag] = useState("");
-  const [sort, setSort] = useState<SortOption>("latest");
-  const [page, setPage] = useState(1);
-  const debouncedQuery = useDebounce(query, 350);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlQuery = searchParams.get("q") ?? "";
+  const tag = searchParams.get("tag") ?? "";
+  const sort = parseSort(searchParams.get("sort"));
+  const page = parsePage(searchParams.get("page"));
+  const [queryInput, setQueryInput] = useState(urlQuery);
+  const debouncedQuery = useDebounce(queryInput.trim(), 350);
+
+  useEffect(() => {
+    setQueryInput(urlQuery);
+  }, [urlQuery]);
+
+  useEffect(() => {
+    const currentQuery = searchParams.get("q") ?? "";
+
+    if (debouncedQuery === currentQuery) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (debouncedQuery) {
+      nextParams.set("q", debouncedQuery);
+    } else {
+      nextParams.delete("q");
+    }
+
+    nextParams.delete("page");
+    setSearchParams(nextParams, { replace: true });
+  }, [debouncedQuery, searchParams, setSearchParams]);
+
+  function updateParams(updates: { q?: string; tag?: string; sort?: SortOption; page?: number }, options?: { replace?: boolean }) {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (updates.q !== undefined) {
+      const nextQuery = updates.q.trim();
+
+      if (nextQuery) {
+        nextParams.set("q", nextQuery);
+      } else {
+        nextParams.delete("q");
+      }
+    }
+
+    if (updates.tag !== undefined) {
+      const nextTag = updates.tag.trim();
+
+      if (nextTag) {
+        nextParams.set("tag", nextTag);
+      } else {
+        nextParams.delete("tag");
+      }
+    }
+
+    if (updates.sort !== undefined) {
+      if (updates.sort === "latest") {
+        nextParams.delete("sort");
+      } else {
+        nextParams.set("sort", updates.sort);
+      }
+    }
+
+    if (updates.page !== undefined) {
+      if (updates.page <= 1) {
+        nextParams.delete("page");
+      } else {
+        nextParams.set("page", String(updates.page));
+      }
+    }
+
+    setSearchParams(nextParams, { replace: options?.replace });
+  }
 
   const params = useMemo(
     () => ({
-      q: debouncedQuery.trim(),
+      q: debouncedQuery,
       tag: tag.trim(),
       sort,
       page,
@@ -35,8 +112,8 @@ export default function Search() {
 
   const suggestionsQuery = useQuery({
     queryKey: ["search", "suggestions", debouncedQuery],
-    queryFn: () => searchService.suggestions(debouncedQuery.trim(), 6),
-    enabled: debouncedQuery.trim().length >= 2,
+    queryFn: () => searchService.suggestions(debouncedQuery, 6),
+    enabled: debouncedQuery.length >= 2,
     staleTime: 1000 * 60
   });
 
@@ -50,8 +127,6 @@ export default function Search() {
   const pages = photosQuery.data?.pages ?? 1;
   const total = photosQuery.data?.total ?? 0;
 
-  const resetPage = () => setPage(1);
-
   return (
     <section className="space-y-5">
       <div>
@@ -61,10 +136,9 @@ export default function Search() {
 
       <div className="space-y-3">
         <SearchBar
-          value={query}
+          value={queryInput}
           onChange={(value) => {
-            setQuery(value);
-            resetPage();
+            setQueryInput(value);
           }}
         />
 
@@ -77,11 +151,11 @@ export default function Search() {
                 type="button"
                 onClick={() => {
                   if (suggestion.type === "tag") {
-                    setTag(suggestion.value);
+                    updateParams({ tag: suggestion.value, page: 1 });
                   } else {
-                    setQuery(suggestion.value);
+                    setQueryInput(suggestion.value);
+                    updateParams({ q: suggestion.value, page: 1 });
                   }
-                  resetPage();
                 }}
               >
                 {suggestion.label}
@@ -100,8 +174,10 @@ export default function Search() {
           className="focus-ring min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2"
           value={tag}
           onChange={(event) => {
-            setTag(event.target.value);
-            resetPage();
+            updateParams({
+              tag: event.target.value,
+              page: 1
+            });
           }}
           placeholder="Filter by tag"
         />
@@ -113,8 +189,10 @@ export default function Search() {
           className="focus-ring rounded-lg border border-slate-300 px-3 py-2"
           value={sort}
           onChange={(event) => {
-            setSort(event.target.value as SortOption);
-            resetPage();
+            updateParams({
+              sort: event.target.value as SortOption,
+              page: 1
+            });
           }}
         >
           <option value="latest">Latest</option>
@@ -131,8 +209,10 @@ export default function Search() {
               className="focus-ring rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700 hover:bg-pine hover:text-white"
               type="button"
               onClick={() => {
-                setTag(trendingTag.slug);
-                resetPage();
+                updateParams({
+                  tag: trendingTag.slug,
+                  page: 1
+                });
               }}
             >
               #{trendingTag.name} ({trendingTag.photoCount})
@@ -161,7 +241,7 @@ export default function Search() {
           <button
             className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
             type="button"
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            onClick={() => updateParams({ page: Math.max(1, page - 1) })}
             disabled={page === 1}
           >
             Previous
@@ -172,7 +252,7 @@ export default function Search() {
           <button
             className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
             type="button"
-            onClick={() => setPage((current) => current + 1)}
+            onClick={() => updateParams({ page: page + 1 })}
             disabled={page >= pages}
           >
             Next
