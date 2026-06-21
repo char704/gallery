@@ -1,9 +1,11 @@
-import { Calendar, Heart, MessageCircle, RotateCcw, User, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Calendar, RotateCcw, User, X, ZoomIn, ZoomOut } from "lucide-react";
 import FocusTrap from "focus-trap-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 import { LoadingSpinner } from "../Common/LoadingSpinner";
+import { PhotoComments } from "./PhotoComments";
+import { PhotoLikeButton } from "./PhotoLikeButton";
 import { usePhoto } from "../../hooks/usePhotos";
 import { cloudinary } from "../../utils/cloudinary";
 
@@ -87,8 +89,6 @@ export function PhotoViewerModal() {
   }, [photo]);
 
   const label = photo ? `Viewing ${photo.title}` : "Photo viewer";
-  const likes = photo?._count?.likes ?? 0;
-  const comments = photo?._count?.comments ?? 0;
 
   return (
     <FocusTrap
@@ -184,7 +184,7 @@ export function PhotoViewerModal() {
           </div>
 
           {photo ? (
-            <aside className="max-h-[42vh] overflow-y-auto border-t border-white/10 bg-white p-5 text-ink lg:max-h-none lg:w-96 lg:border-l lg:border-t-0">
+            <aside className="max-h-[42vh] overflow-y-auto border-t border-white/10 bg-white p-5 text-ink lg:h-screen lg:max-h-screen lg:w-96 lg:border-l lg:border-t-0">
               <div className="space-y-5">
                 <div>
                   <h1 className="text-2xl font-semibold text-ink">{photo.title}</h1>
@@ -202,16 +202,7 @@ export function PhotoViewerModal() {
                     <Calendar size={16} />
                     {createdDate}
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 font-semibold text-slate-700">
-                      <Heart size={14} />
-                      {likes} likes
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 font-semibold text-slate-700">
-                      <MessageCircle size={14} />
-                      {comments} comments
-                    </span>
-                  </div>
+                  <PhotoLikeButton photoId={photo.id} />
                 </div>
 
                 <div className="border-t border-slate-200 pt-5">
@@ -232,6 +223,8 @@ export function PhotoViewerModal() {
                     <p className="mt-3 text-sm text-slate-500">No tags yet.</p>
                   )}
                 </div>
+
+                <PhotoComments photoId={photo.id} />
               </div>
             </aside>
           ) : null}

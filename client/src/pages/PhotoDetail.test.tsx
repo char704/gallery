@@ -18,7 +18,10 @@ vi.mock("../services/photo.service", () => ({
     deletePhoto: vi.fn(),
     updatePhotoTags: vi.fn(),
     likePhoto: vi.fn(),
-    unlikePhoto: vi.fn()
+    unlikePhoto: vi.fn(),
+    getComments: vi.fn(),
+    createComment: vi.fn(),
+    deleteComment: vi.fn()
   }
 }));
 
@@ -74,6 +77,12 @@ describe("PhotoDetail", () => {
     mockPhotoService.getLikeSummary.mockResolvedValue({
       count: 0,
       isLiked: false
+    });
+    mockPhotoService.getComments.mockResolvedValue({
+      comments: [],
+      total: 0,
+      page: 1,
+      pages: 0
     });
   });
 
