@@ -60,6 +60,20 @@ export default function Explore() {
     setSearchParams(nextParams, { replace: true });
   }, [debouncedTag, searchParams, setSearchParams]);
 
+  useEffect(() => {
+    if (!isLoading && !isError && data && page > Math.max(1, pages)) {
+      const nextParams = new URLSearchParams(searchParams);
+
+      if (pages <= 1) {
+        nextParams.delete("page");
+      } else {
+        nextParams.set("page", String(pages));
+      }
+
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [data, isError, isLoading, page, pages, searchParams, setSearchParams]);
+
   function updateParams(updates: { tag?: string; sort?: NonNullable<PhotoQueryParams["sort"]>; page?: number }) {
     const nextParams = new URLSearchParams(searchParams);
 

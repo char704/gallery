@@ -77,4 +77,17 @@ describe("Explore", () => {
       expect(screen.getByTestId("location")).toHaveTextContent("?tag=nature&page=2");
     });
   });
+
+  it("clamps an out-of-range page from the URL to the last available page", async () => {
+    render(
+      <MemoryRouter initialEntries={["/explore?page=999"]}>
+        <Explore />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location")).toHaveTextContent("?page=3");
+    });
+  });
 });

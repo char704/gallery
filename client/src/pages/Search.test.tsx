@@ -62,4 +62,22 @@ describe("Search", () => {
       expect(mockSearchService.suggestions).toHaveBeenCalledWith("sun", 6);
     });
   });
+
+  it("hydrates search filters from URL query params", async () => {
+    renderWithProviders(<Search />, {
+      initialEntries: ["/search?q=sunrise&tag=nature&sort=popular&page=2"]
+    });
+
+    expect(screen.getByPlaceholderText("Search photos, tags, or creators")).toHaveValue("sunrise");
+
+    await waitFor(() => {
+      expect(mockSearchService.photos).toHaveBeenCalledWith({
+        q: "sunrise",
+        tag: "nature",
+        sort: "popular",
+        page: 2,
+        limit: 12
+      });
+    });
+  });
 });
