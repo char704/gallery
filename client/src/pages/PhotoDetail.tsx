@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "../components/Common/ConfirmDialog";
 import { LoadingSpinner } from "../components/Common/LoadingSpinner";
 import { PhotoComments } from "../components/Photo/PhotoComments";
+import { PhotoLikeButton } from "../components/Photo/PhotoLikeButton";
 import { photoService } from "../services/photo.service";
 import { useAuthStore } from "../store/authStore";
 import { usePhoto } from "../hooks/usePhotos";
@@ -25,12 +26,6 @@ export default function PhotoDetail() {
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isOwner = Boolean(user && photo && user.id === photo.userId);
-
-  const likeQuery = useQuery({
-    queryKey: ["likes", photoId, token],
-    queryFn: () => photoService.getLikeSummary(photoId ?? "", token),
-    enabled: Boolean(photoId)
-  });
 
   useEffect(() => {
     if (photo) {
@@ -96,20 +91,6 @@ export default function PhotoDetail() {
     onSuccess: async () => {
       setIsEditingTags(false);
       await queryClient.invalidateQueries({ queryKey: ["photos", photoId] });
-      await queryClient.invalidateQueries({ queryKey: ["photos"] });
-    }
-  });
-
-  const likeMutation = useMutation({
-    mutationFn: () => {
-      if (!photo || !token) {
-        throw new Error("You must be logged in to like this photo.");
-      }
-
-      return likeQuery.data?.isLiked ? photoService.unlikePhoto(photo.id, token) : photoService.likePhoto(photo.id, token);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["likes", photoId] });
       await queryClient.invalidateQueries({ queryKey: ["photos"] });
     }
   });
@@ -211,21 +192,11 @@ export default function PhotoDetail() {
                   <h1 className="text-2xl font-semibold text-ink">{photo.title}</h1>
                   <p className="mt-2 text-slate-600">{photo.description}</p>
                   <p className="mt-3 text-sm font-medium text-slate-500">
-                    {photo.visibility.toLowerCase()} / {likeQuery.data?.count ?? photo._count?.likes ?? 0} likes /{" "}
-                    {photo._count?.comments ?? 0} comments
+                    {photo.visibility.toLowerCase()} / {photo._count?.comments ?? 0} comments
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {token ? (
-                    <button
-                      className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-                      type="button"
-                      onClick={() => likeMutation.mutate()}
-                      disabled={likeMutation.isPending}
-                    >
-                      {likeQuery.data?.isLiked ? "Unlike" : "Like"}
-                    </button>
-                  ) : null}
+                  <PhotoLikeButton photoId={photo.id} />
                   {isOwner ? (
                     <>
                     <button
