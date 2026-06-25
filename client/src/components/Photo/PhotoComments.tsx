@@ -43,10 +43,12 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
   const pages = commentsQuery.data?.pages ?? 1;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
+    <section className="rounded-xl border border-vellum bg-surface p-4 shadow-soft sm:p-5" aria-labelledby="photo-comments-heading">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-ink">Comments</h2>
-        {commentsQuery.data ? <span className="text-sm text-slate-500">{commentsQuery.data.total} total</span> : null}
+        <h2 id="photo-comments-heading" className="text-xl font-bold text-ink">
+          Comments
+        </h2>
+        {commentsQuery.data ? <span className="text-sm font-semibold text-ink-muted">{commentsQuery.data.total} total</span> : null}
       </div>
 
       {token ? (
@@ -59,15 +61,19 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
             }
           }}
         >
+          <label className="sr-only" htmlFor="photo-comment-content">
+            Add a comment
+          </label>
           <input
-            className="focus-ring min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2"
+            id="photo-comment-content"
+            className="focus-ring min-w-0 flex-1 rounded-lg border border-vellum bg-surface px-3 py-2 text-ink placeholder:text-ink-muted"
             value={content}
             onChange={(event) => setContent(event.target.value)}
             placeholder="Add a comment"
             maxLength={1000}
           />
           <button
-            className="focus-ring inline-flex items-center justify-center gap-2 rounded-lg bg-pine px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="focus-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-pine px-4 py-2 text-sm font-semibold text-white transition hover:bg-pine-dark disabled:cursor-not-allowed disabled:opacity-60"
             type="submit"
             disabled={createMutation.isPending || !content.trim()}
           >
@@ -76,26 +82,26 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
           </button>
         </form>
       ) : (
-        <p className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">Log in to join the conversation.</p>
+        <p className="mt-4 rounded-lg border border-vellum bg-mist p-3 text-sm text-ink-soft">Log in to join the conversation.</p>
       )}
 
       {createMutation.isError ? (
-        <p className="mt-3 text-sm text-red-600">
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
           {createMutation.error instanceof Error ? createMutation.error.message : "Could not post comment."}
         </p>
       ) : null}
 
-      <div className="mt-5 divide-y divide-slate-100">
-        {commentsQuery.isLoading ? <p className="py-4 text-sm text-slate-500">Loading comments...</p> : null}
+      <div className="mt-5 divide-y divide-vellum">
+        {commentsQuery.isLoading ? <p className="py-4 text-sm text-ink-muted">Loading comments...</p> : null}
         {comments.map((comment) => (
           <article key={comment.id} className="flex items-start justify-between gap-3 py-4">
             <div>
               <p className="text-sm font-semibold text-ink">{comment.user?.name ?? "FrameHub user"}</p>
-              <p className="mt-1 text-sm text-slate-700">{comment.content}</p>
+              <p className="mt-1 text-sm leading-6 text-ink-soft">{comment.content}</p>
             </div>
             {user?.id === comment.userId ? (
               <button
-                className="focus-ring rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
+                className="focus-ring rounded-lg border border-vellum bg-surface p-2 text-ink-muted transition hover:border-red-200 hover:bg-red-50 hover:text-red-800"
                 type="button"
                 aria-label="Delete comment"
                 onClick={() => deleteMutation.mutate(comment.id)}
@@ -106,24 +112,24 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
             ) : null}
           </article>
         ))}
-        {!commentsQuery.isLoading && comments.length === 0 ? <p className="py-4 text-sm text-slate-500">No comments yet.</p> : null}
+        {!commentsQuery.isLoading && comments.length === 0 ? <p className="py-4 text-sm text-ink-muted">No comments yet.</p> : null}
       </div>
 
       {comments.length > 0 ? (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
           <button
-            className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
+            className="focus-ring rounded-lg border border-vellum bg-surface px-3 py-2 text-sm font-semibold text-ink-soft transition hover:border-lagoon hover:text-lagoon-dark disabled:cursor-not-allowed disabled:opacity-50"
             type="button"
             onClick={() => setPage((current) => Math.max(1, current - 1))}
             disabled={page === 1}
           >
             Previous
           </button>
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-ink-soft">
             Page {page} of {Math.max(1, pages)}
           </span>
           <button
-            className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
+            className="focus-ring rounded-lg border border-vellum bg-surface px-3 py-2 text-sm font-semibold text-ink-soft transition hover:border-lagoon hover:text-lagoon-dark disabled:cursor-not-allowed disabled:opacity-50"
             type="button"
             onClick={() => setPage((current) => current + 1)}
             disabled={page >= pages}

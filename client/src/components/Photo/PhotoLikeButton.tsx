@@ -10,10 +10,9 @@ export function PhotoLikeButton({ photoId }: PhotoLikeButtonProps) {
 
   if (!isLoggedIn) {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600">
+      <div className="inline-flex min-h-10 flex-wrap items-center gap-2 rounded-lg border border-vellum bg-mist px-3 py-2 text-sm text-ink-soft">
         <Heart size={16} />
-        <span>{count} likes</span>
-        <span className="text-slate-400">/</span>
+        <span className="font-semibold text-ink">{count} {count === 1 ? "like" : "likes"}</span>
         <span>Log in to like this photo.</span>
       </div>
     );
@@ -21,7 +20,7 @@ export function PhotoLikeButton({ photoId }: PhotoLikeButtonProps) {
 
   return (
     <button
-      className="focus-ring inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+      className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-lg border border-vellum bg-surface px-3 py-2 text-sm font-semibold text-ink-soft transition hover:border-lagoon hover:text-lagoon-dark disabled:cursor-not-allowed disabled:opacity-60"
       type="button"
       onClick={() => toggleLike()}
       disabled={isPending}
