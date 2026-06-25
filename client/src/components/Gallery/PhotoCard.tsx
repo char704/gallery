@@ -58,22 +58,29 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
     }
 
     const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    const startViewTransition = (document as DocumentWithViewTransition).startViewTransition;
+    const viewTransitionDocument = document as DocumentWithViewTransition;
 
-    if (prefersReducedMotion || !startViewTransition) {
+    if (prefersReducedMotion || !viewTransitionDocument.startViewTransition) {
       return;
     }
 
     event.preventDefault();
-    startViewTransition(() => {
-      flushSync(() => {
-        navigate(photoPath, {
-          state: {
-            backgroundLocation: location
-          }
-        });
+
+    const navigateToPhoto = () => {
+      navigate(photoPath, {
+        state: {
+          backgroundLocation: location
+        }
       });
-    });
+    };
+
+    try {
+      viewTransitionDocument.startViewTransition(() => {
+        flushSync(navigateToPhoto);
+      });
+    } catch (error) {
+      navigateToPhoto();
+    }
   }
 
   return (
@@ -98,14 +105,14 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
       </Link>
       <span
         className={[
-          "absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold capitalize text-white shadow-sm backdrop-blur-md",
+          "pointer-events-none absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold capitalize text-white shadow-sm backdrop-blur-md",
           isExplorePresentation ? "border border-white/35 bg-ink/70" : "border border-white/30 bg-white/25"
         ].join(" ")}
       >
         <VisibilityIcon size={13} />
         {visibilityLabel}
       </span>
-      <div className="absolute inset-x-0 bottom-0 space-y-2 p-3 opacity-100 transition duration-300 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 space-y-2 p-3 opacity-100 transition duration-300 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
         <div
           className={[
             "p-3 text-white",
@@ -116,7 +123,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
             <div className="font-display text-xl font-bold leading-snug">{photo.title}</div>
           ) : (
             <Link
-              className="focus-ring block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light"
+              className="focus-ring pointer-events-auto block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light"
               to={`/photos/${photo.id}`}
               state={{ backgroundLocation: location }}
               onClick={handlePhotoOpen}
@@ -126,7 +133,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
           )}
           {photo.description ? <p className="mt-1 line-clamp-2 text-sm leading-5 text-white/80">{photo.description}</p> : null}
           {photo.user ? (
-            <Link className="focus-ring mt-2 inline-flex rounded text-sm font-semibold text-white/85 hover:text-white" to={`/users/${photo.user.id}/photos`}>
+            <Link className="focus-ring pointer-events-auto mt-2 inline-flex rounded text-sm font-semibold text-white/85 hover:text-white" to={`/users/${photo.user.id}/photos`}>
               by {photo.user.name}
             </Link>
           ) : null}
@@ -155,7 +162,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
           {tags.slice(0, 2).map((tag) => (
             <Link
               className={[
-                "focus-ring rounded-lg px-2 py-1 text-xs font-semibold backdrop-blur-md transition",
+                "focus-ring pointer-events-auto rounded-lg px-2 py-1 text-xs font-semibold backdrop-blur-md transition",
                 isExplorePresentation ? "bg-ink/48 text-white/90 hover:bg-ink/70" : "border border-white/30 bg-white/20 text-white hover:bg-white/30"
               ].join(" ")}
               key={tag.id}
