@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { PhotoCard } from "./PhotoCard";
 import type { Photo } from "../../types";
 
@@ -53,92 +53,21 @@ function renderPhotoCard() {
   );
 }
 
-function setStartViewTransition(value: unknown) {
-  Object.defineProperty(document, "startViewTransition", {
-    configurable: true,
-    value
-  });
-}
-
 describe("PhotoCard navigation", () => {
-  beforeEach(() => {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn()
-    }));
-  });
-
-  afterEach(() => {
-    Reflect.deleteProperty(document, "startViewTransition");
-    vi.restoreAllMocks();
-  });
-
-  it("calls startViewTransition with document as the receiver", async () => {
-    const user = userEvent.setup();
-    const startViewTransition = vi.fn(function (this: Document, callback: () => void) {
-      expect(this).toBe(document);
-      callback();
-    });
-
-    setStartViewTransition(startViewTransition);
-
-    renderPhotoCard();
-    await user.click(screen.getByRole("link", { name: "Open Quiet frame" }));
-
-    expect(startViewTransition).toHaveBeenCalledTimes(1);
-    await waitFor(() => {
-      const locations = screen.getAllByTestId("location");
-      expect(locations[locations.length - 1]).toHaveTextContent("/photos/photo-1|has-state");
-    });
-  });
-
-  it("navigates manually if startViewTransition throws after preventDefault", async () => {
+  it("uses a normal link to the full photo detail route without modal route state", async () => {
     const user = userEvent.setup();
 
-    setStartViewTransition(
-      vi.fn(() => {
-        throw new TypeError("Illegal invocation");
-      })
-    );
-
     renderPhotoCard();
-    await user.click(screen.getByRole("link", { name: "Open Quiet frame" }));
+
+    const photoLink = screen.getByRole("link", { name: "Open Quiet frame" });
+
+    expect(photoLink).toHaveAttribute("href", "/photos/photo-1");
+
+    await user.click(photoLink);
 
     await waitFor(() => {
       const locations = screen.getAllByTestId("location");
-      expect(locations[locations.length - 1]).toHaveTextContent("/photos/photo-1|has-state");
-    });
-  });
-
-  it("lets reduced-motion users use normal Link navigation", async () => {
-    const user = userEvent.setup();
-    const startViewTransition = vi.fn();
-
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: query === "(prefers-reduced-motion: reduce)",
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn()
-    }));
-    setStartViewTransition(startViewTransition);
-
-    renderPhotoCard();
-    await user.click(screen.getByRole("link", { name: "Open Quiet frame" }));
-
-    expect(startViewTransition).not.toHaveBeenCalled();
-    await waitFor(() => {
-      const locations = screen.getAllByTestId("location");
-      expect(locations[locations.length - 1]).toHaveTextContent("/photos/photo-1|has-state");
+      expect(locations[locations.length - 1]).toHaveTextContent("/photos/photo-1|no-state");
     });
   });
 });
