@@ -1,8 +1,5 @@
 import { Eye, Heart, Link2, Lock, MessageCircle } from "lucide-react";
-import type { CSSProperties, MouseEvent } from "react";
-import { flushSync } from "react-dom";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { visualFeatures } from "../../config/visualFeatures";
+import { Link } from "react-router-dom";
 import type { Photo, Tag } from "../../types";
 import { cloudinary } from "../../utils/cloudinary";
 
@@ -12,23 +9,12 @@ interface PhotoCardProps {
   presentation?: "default" | "explore";
 }
 
-type DocumentWithViewTransition = Document & {
-  startViewTransition?: (callback: () => void) => void;
-};
-
 export function PhotoCard({ photo, layout = "grid", presentation = "default" }: PhotoCardProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
   const VisibilityIcon = photo.visibility === "PUBLIC" ? Eye : photo.visibility === "UNLISTED" ? Link2 : Lock;
   const isMasonry = layout === "masonry";
   const isExplorePresentation = presentation === "explore";
   const visibilityLabel = photo.visibility.toLowerCase();
   const photoPath = `/photos/${photo.id}`;
-  const isActiveModalPhoto = location.pathname === photoPath;
-  const transitionName = visualFeatures.sharedPhotoTransition && !isActiveModalPhoto ? `photo-${photo.id}` : undefined;
-  const transitionStyle = transitionName
-    ? ({ viewTransitionName: transitionName } as CSSProperties & { viewTransitionName?: string })
-    : undefined;
   const displayUrl =
     cloudinary.url(photo.publicId, {
       secure: true,
@@ -44,53 +30,12 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
   const tags =
     photo.tags?.map((photoTag) => ("tag" in photoTag ? photoTag.tag : (photoTag as unknown as Tag))) ?? [];
 
-  function handlePhotoOpen(event: MouseEvent<HTMLAnchorElement>) {
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.altKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      !visualFeatures.sharedPhotoTransition
-    ) {
-      return;
-    }
-
-    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    const viewTransitionDocument = document as DocumentWithViewTransition;
-
-    if (prefersReducedMotion || !viewTransitionDocument.startViewTransition) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const navigateToPhoto = () => {
-      navigate(photoPath, {
-        state: {
-          backgroundLocation: location
-        }
-      });
-    };
-
-    try {
-      viewTransitionDocument.startViewTransition(() => {
-        flushSync(navigateToPhoto);
-      });
-    } catch (error) {
-      navigateToPhoto();
-    }
-  }
-
   return (
     <article className="group relative overflow-hidden rounded-xl bg-ink shadow-soft transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 hover:shadow-gallery">
       <Link
         className={`focus-ring block w-full overflow-hidden ${isMasonry ? "" : "aspect-[4/3]"}`}
-        to={`/photos/${photo.id}`}
-        state={{ backgroundLocation: location }}
+        to={photoPath}
         aria-label={`Open ${photo.title}`}
-        onClick={handlePhotoOpen}
       >
         <img
           className={`${isMasonry ? "h-auto" : "h-full"} w-full object-cover transition duration-500 motion-safe:group-hover:scale-105`}
@@ -99,7 +44,6 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
           width={photo.width}
           height={photo.height}
           loading="lazy"
-          style={transitionStyle}
         />
         <span className="absolute inset-0 bg-gradient-to-t from-ink/82 via-ink/10 to-transparent opacity-75 transition duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
       </Link>
@@ -124,9 +68,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
           ) : (
             <Link
               className="focus-ring pointer-events-auto block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light"
-              to={`/photos/${photo.id}`}
-              state={{ backgroundLocation: location }}
-              onClick={handlePhotoOpen}
+              to={photoPath}
             >
               {photo.title}
             </Link>
