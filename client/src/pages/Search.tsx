@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { AlertCircle, ArrowLeft, ArrowRight, Search as SearchIcon, SlidersHorizontal, Tag, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PhotoGrid } from "../components/Gallery/PhotoGrid";
@@ -126,15 +127,33 @@ export default function Search() {
   const photos = photosQuery.data?.photos ?? [];
   const pages = photosQuery.data?.pages ?? 1;
   const total = photosQuery.data?.total ?? 0;
+  const hasActiveFilters = Boolean(urlQuery || tag || sort !== "latest");
+  const activeDescription = [
+    urlQuery ? `"${urlQuery}"` : null,
+    tag ? `tagged #${tag}` : null,
+    sort !== "latest" ? `sorted by ${sort}` : null
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
-    <section className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-semibold text-ink">Search</h1>
-        <p className="mt-1 text-sm text-slate-600">Find public photos by title, description, or tag.</p>
+    <section className="space-y-6" aria-labelledby="search-title">
+      <div className="flex flex-col gap-3 border-b border-vellum pb-5 md:flex-row md:items-end md:justify-between">
+        <div className="max-w-3xl">
+          <p className="text-sm font-semibold uppercase tracking-wide text-lagoon-dark">Public discovery</p>
+          <h1 id="search-title" className="mt-2 text-3xl font-semibold text-ink md:text-4xl">
+            Search photos
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-ink-muted md:text-base">
+            Find public photos by title, description, tag, or creator without leaving the gallery flow.
+          </p>
+        </div>
+        <p className="text-sm font-medium text-ink-muted" aria-live="polite">
+          {photosQuery.isLoading ? "Searching photos..." : `${total} public ${total === 1 ? "photo" : "photos"} found`}
+        </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <SearchBar
           value={queryInput}
           onChange={(value) => {
@@ -143,121 +162,206 @@ export default function Search() {
         />
 
         {suggestionsQuery.data?.suggestions.length ? (
-          <div className="flex flex-wrap gap-2">
-            {suggestionsQuery.data.suggestions.map((suggestion) => (
-              <button
-                key={`${suggestion.type}-${suggestion.id}`}
-                className="focus-ring rounded-full border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:border-pine hover:text-pine"
-                type="button"
-                onClick={() => {
-                  if (suggestion.type === "tag") {
-                    updateParams({ tag: suggestion.value, page: 1 });
-                  } else {
-                    setQueryInput(suggestion.value);
-                    updateParams({ q: suggestion.value, page: 1 });
-                  }
-                }}
-              >
-                {suggestion.label}
-              </button>
-            ))}
-          </div>
+          <section className="space-y-2" aria-labelledby="search-suggestions-title">
+            <h2 id="search-suggestions-title" className="text-sm font-semibold text-ink">
+              Suggestions
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {suggestionsQuery.data.suggestions.map((suggestion) => (
+                <button
+                  key={`${suggestion.type}-${suggestion.id}`}
+                  className="focus-ring inline-flex items-center gap-2 rounded-full border border-vellum bg-surface px-3 py-1.5 text-sm font-medium text-ink transition hover:border-lagoon hover:text-lagoon-dark motion-reduce:transition-none"
+                  type="button"
+                  onClick={() => {
+                    if (suggestion.type === "tag") {
+                      updateParams({ tag: suggestion.value, page: 1 });
+                    } else {
+                      setQueryInput(suggestion.value);
+                      updateParams({ q: suggestion.value, page: 1 });
+                    }
+                  }}
+                >
+                  {suggestion.type === "tag" ? <Tag size={14} aria-hidden="true" /> : <SearchIcon size={14} aria-hidden="true" />}
+                  <span>{suggestion.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 md:flex-row md:items-center">
-        <label className="sr-only" htmlFor="search-filter-tag">
-          Filter search results by tag
-        </label>
-        <input
-          id="search-filter-tag"
-          className="focus-ring min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2"
-          value={tag}
-          onChange={(event) => {
-            updateParams({
-              tag: event.target.value,
-              page: 1
-            });
-          }}
-          placeholder="Filter by tag"
-        />
-        <label className="sr-only" htmlFor="search-filter-sort">
-          Sort search results
-        </label>
-        <select
-          id="search-filter-sort"
-          className="focus-ring rounded-lg border border-slate-300 px-3 py-2"
-          value={sort}
-          onChange={(event) => {
-            updateParams({
-              sort: event.target.value as SortOption,
-              page: 1
-            });
-          }}
-        >
-          <option value="latest">Latest</option>
-          <option value="oldest">Oldest</option>
-          <option value="popular">Popular</option>
-        </select>
-      </div>
-
-      {tagsQuery.data?.tags.length ? (
-        <div className="flex flex-wrap gap-2">
-          {tagsQuery.data.tags.map((trendingTag) => (
-            <button
-              key={trendingTag.id}
-              className="focus-ring rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700 hover:bg-pine hover:text-white"
-              type="button"
-              onClick={() => {
+      <section className="space-y-3 border border-vellum bg-surface p-4" aria-labelledby="search-filters-title">
+        <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <SlidersHorizontal size={18} aria-hidden="true" />
+          <h2 id="search-filters-title">Refine results</h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink" htmlFor="search-filter-tag">
+              Tag filter
+            </label>
+            <input
+              id="search-filter-tag"
+              className="focus-ring min-h-11 w-full rounded-lg border border-vellum bg-white px-3 py-2 text-ink placeholder:text-ink-muted"
+              value={tag}
+              onChange={(event) => {
                 updateParams({
-                  tag: trendingTag.slug,
+                  tag: event.target.value,
+                  page: 1
+                });
+              }}
+              placeholder="Filter by tag"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink" htmlFor="search-filter-sort">
+              Sort by
+            </label>
+            <select
+              id="search-filter-sort"
+              className="focus-ring min-h-11 w-full rounded-lg border border-vellum bg-white px-3 py-2 text-ink"
+              value={sort}
+              onChange={(event) => {
+                updateParams({
+                  sort: event.target.value as SortOption,
                   page: 1
                 });
               }}
             >
-              #{trendingTag.name} ({trendingTag.photoCount})
-            </button>
-          ))}
+              <option value="latest">Latest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="popular">Most liked</option>
+            </select>
+          </div>
         </div>
+
+        {hasActiveFilters ? (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-medium text-ink-muted">Active:</span>
+            {urlQuery ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-vellum bg-white px-3 py-1 font-medium text-ink">
+                Search "{urlQuery}"
+              </span>
+            ) : null}
+            {tag ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-vellum bg-white px-3 py-1 font-medium text-ink">
+                <Tag size={14} aria-hidden="true" />#{tag}
+              </span>
+            ) : null}
+            {sort !== "latest" ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-vellum bg-white px-3 py-1 font-medium text-ink">
+                {sort === "popular" ? "Most liked" : "Oldest first"}
+              </span>
+            ) : null}
+            <button
+              className="focus-ring inline-flex items-center gap-1 rounded-full border border-vellum bg-white px-3 py-1 font-semibold text-ink transition hover:border-red-300 hover:text-red-700 motion-reduce:transition-none"
+              type="button"
+              onClick={() => {
+                setQueryInput("");
+                setSearchParams(new URLSearchParams(), { replace: true });
+              }}
+            >
+              <X size={14} aria-hidden="true" />
+              Clear filters
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      {tagsQuery.data?.tags.length ? (
+        <section className="space-y-2" aria-labelledby="popular-tags-title">
+          <h2 id="popular-tags-title" className="text-sm font-semibold text-ink">
+            Popular tags
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {tagsQuery.data.tags.map((trendingTag) => (
+              <button
+                key={trendingTag.id}
+                className="focus-ring inline-flex items-center gap-2 rounded-full border border-vellum bg-surface px-3 py-1.5 text-sm font-medium text-ink transition hover:border-lagoon hover:text-lagoon-dark motion-reduce:transition-none"
+                type="button"
+                onClick={() => {
+                  updateParams({
+                    tag: trendingTag.slug,
+                    page: 1
+                  });
+                }}
+              >
+                <Tag size={14} aria-hidden="true" />
+                <span>#{trendingTag.name}</span>
+                <span className="text-ink-muted">{trendingTag.photoCount}</span>
+              </button>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {photosQuery.isError ? (
-        <section className="rounded-lg border border-red-200 bg-red-50 p-5 text-red-700">
-          {photosQuery.error instanceof Error ? photosQuery.error.message : "Could not search photos."}
+        <section className="flex gap-3 border border-red-200 bg-red-50 p-4 text-red-800" role="alert">
+          <AlertCircle className="mt-0.5 shrink-0" size={20} aria-hidden="true" />
+          <div>
+            <h2 className="text-sm font-semibold">Search could not load</h2>
+            <p className="mt-1 text-sm">
+              {photosQuery.error instanceof Error ? photosQuery.error.message : "Could not search photos."}
+            </p>
+          </div>
         </section>
       ) : null}
 
       {photosQuery.isLoading ? (
         <PhotoGrid photos={[]} isLoading layout="masonry" />
       ) : (
-        <>
-          <p className="text-sm text-slate-600">{total} public photos found</p>
-          <SearchResults photos={photos} />
-        </>
+        <section className="space-y-3" aria-labelledby="search-results-title">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 id="search-results-title" className="text-xl font-semibold text-ink">
+                Results
+              </h2>
+              <p className="text-sm text-ink-muted">
+                {activeDescription ? `Showing ${activeDescription}.` : "Showing public photos from FrameHub."}
+              </p>
+            </div>
+            {photos.length > 0 ? (
+              <p className="text-sm font-medium text-ink-muted">
+                Page {page} of {Math.max(1, pages)}
+              </p>
+            ) : null}
+          </div>
+          <SearchResults
+            photos={photos}
+            emptyTitle={hasActiveFilters ? "No matching photos" : "Start searching public photos"}
+            emptyMessage={
+              hasActiveFilters
+                ? "Try a broader search term, remove the tag filter, or choose a different popular tag."
+                : "Search by title, description, tag, or creator to discover public photos."
+            }
+          />
+        </section>
       )}
 
       {photos.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <nav className="flex flex-wrap items-center justify-center gap-3 pt-2" aria-label="Search pagination">
           <button
-            className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
+            className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-lg border border-vellum bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:border-lagoon hover:text-lagoon-dark disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
             type="button"
             onClick={() => updateParams({ page: Math.max(1, page - 1) })}
             disabled={page === 1}
           >
+            <ArrowLeft size={16} aria-hidden="true" />
             Previous
           </button>
-          <span className="text-sm text-slate-600">
+          <span className="text-sm font-medium text-ink-muted" aria-current="page">
             Page {page} of {Math.max(1, pages)}
           </span>
           <button
-            className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-50"
+            className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-lg border border-vellum bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:border-lagoon hover:text-lagoon-dark disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
             type="button"
             onClick={() => updateParams({ page: page + 1 })}
             disabled={page >= pages}
           >
             Next
+            <ArrowRight size={16} aria-hidden="true" />
           </button>
-        </div>
+        </nav>
       ) : null}
     </section>
   );
