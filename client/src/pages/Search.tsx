@@ -140,7 +140,7 @@ export default function Search() {
     <section className="space-y-6" aria-labelledby="search-title">
       <div className="flex flex-col gap-3 border-b border-vellum pb-5 md:flex-row md:items-end md:justify-between">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-wide text-lagoon-dark">Public discovery</p>
+          <p className="text-sm font-semibold text-lagoon-dark">Public discovery</p>
           <h1 id="search-title" className="mt-2 text-3xl font-semibold text-ink md:text-4xl">
             Search photos
           </h1>
@@ -170,7 +170,7 @@ export default function Search() {
               {suggestionsQuery.data.suggestions.map((suggestion) => (
                 <button
                   key={`${suggestion.type}-${suggestion.id}`}
-                  className="focus-ring inline-flex items-center gap-2 rounded-full border border-vellum bg-surface px-3 py-1.5 text-sm font-medium text-ink transition hover:border-lagoon hover:text-lagoon-dark motion-reduce:transition-none"
+                  className="focus-ring inline-flex items-center gap-2 rounded-lg border border-vellum bg-surface px-3 py-1.5 text-sm font-medium text-ink transition hover:border-lagoon hover:text-lagoon-dark motion-reduce:transition-none"
                   type="button"
                   onClick={() => {
                     if (suggestion.type === "tag") {
@@ -190,9 +190,9 @@ export default function Search() {
         ) : null}
       </div>
 
-      <section className="space-y-3 border border-vellum bg-surface p-4" aria-labelledby="search-filters-title">
-        <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-          <SlidersHorizontal size={18} aria-hidden="true" />
+      <section className="space-y-3 border-y border-vellum bg-surface/45 py-4" aria-labelledby="search-filters-title">
+        <div className="flex items-center gap-2 text-sm font-semibold text-ink-soft">
+          <SlidersHorizontal className="text-lagoon-dark" size={18} aria-hidden="true" />
           <h2 id="search-filters-title">Refine results</h2>
         </div>
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
@@ -239,22 +239,22 @@ export default function Search() {
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-medium text-ink-muted">Active:</span>
             {urlQuery ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-vellum bg-white px-3 py-1 font-medium text-ink">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-vellum bg-surface px-3 py-1 font-medium text-ink">
                 Search "{urlQuery}"
               </span>
             ) : null}
             {tag ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-vellum bg-white px-3 py-1 font-medium text-ink">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-vellum bg-surface px-3 py-1 font-medium text-ink">
                 <Tag size={14} aria-hidden="true" />#{tag}
               </span>
             ) : null}
             {sort !== "latest" ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-vellum bg-white px-3 py-1 font-medium text-ink">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-vellum bg-surface px-3 py-1 font-medium text-ink">
                 {sort === "popular" ? "Most liked" : "Oldest first"}
               </span>
             ) : null}
             <button
-              className="focus-ring inline-flex items-center gap-1 rounded-full border border-vellum bg-white px-3 py-1 font-semibold text-ink transition hover:border-red-300 hover:text-red-700 motion-reduce:transition-none"
+              className="focus-ring inline-flex items-center gap-1 rounded-lg border border-vellum bg-surface px-3 py-1 font-semibold text-ink transition hover:border-red-300 hover:text-red-700 motion-reduce:transition-none"
               type="button"
               onClick={() => {
                 setQueryInput("");
@@ -277,7 +277,7 @@ export default function Search() {
             {tagsQuery.data.tags.map((trendingTag) => (
               <button
                 key={trendingTag.id}
-                className="focus-ring inline-flex items-center gap-2 rounded-full border border-vellum bg-surface px-3 py-1.5 text-sm font-medium text-ink transition hover:border-lagoon hover:text-lagoon-dark motion-reduce:transition-none"
+                className="focus-ring inline-flex items-center gap-2 rounded-lg border border-vellum bg-surface px-3 py-1.5 text-sm font-medium text-ink transition hover:border-lagoon hover:text-lagoon-dark motion-reduce:transition-none"
                 type="button"
                 onClick={() => {
                   updateParams({

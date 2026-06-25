@@ -106,6 +106,10 @@ The visual language rejects the Instagram clone, the generic social media feed, 
 - Rounded, consistent controls with visible focus states.
 - Motion limited to state feedback, hover affordance, and reduced-motion-safe transitions.
 
+### Editorial Home Exception
+
+The public Home page may use a bolder editorial contact-sheet composition than the rest of the product: asymmetric image grids, stronger display typography, wider negative space, and fewer conventional cards. This exception should still preserve the core palette, accessible controls, clear auth-aware actions, readable privacy/search paths, and the rule that photographs remain the dominant visual material.
+
 ## 2. Colors
 
 The palette is a calm gallery neutral system with pine as the main action color, lagoon as a secondary discovery accent, and marigold reserved for rare warmth and emphasis.

@@ -1,5 +1,6 @@
 import { Calendar, Eye, Link2, Lock, MessageCircle, RotateCcw, Tag, User, X, ZoomIn, ZoomOut } from "lucide-react";
 import FocusTrap from "focus-trap-react";
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
@@ -7,6 +8,7 @@ import { ConfirmDialog } from "../Common/ConfirmDialog";
 import { LoadingSpinner } from "../Common/LoadingSpinner";
 import { PhotoComments } from "./PhotoComments";
 import { PhotoLikeButton } from "./PhotoLikeButton";
+import { visualFeatures } from "../../config/visualFeatures";
 import { usePhotoOwnerActions } from "../../hooks/usePhotoOwnerActions";
 import { usePhoto } from "../../hooks/usePhotos";
 import { cloudinary } from "../../utils/cloudinary";
@@ -142,6 +144,10 @@ export function PhotoViewerModal() {
 
   const label = photo ? `Viewing ${photo.title}` : "Photo viewer";
   const VisibilityIcon = photo ? visibilityDetails[photo.visibility].Icon : Lock;
+  const transitionStyle =
+    photo && visualFeatures.sharedPhotoTransition
+      ? ({ viewTransitionName: `photo-${photo.id}` } as CSSProperties & { viewTransitionName?: string })
+      : undefined;
 
   return (
     <>
@@ -153,7 +159,7 @@ export function PhotoViewerModal() {
           escapeDeactivates: false
         }}
       >
-        <div role="dialog" aria-modal="true" aria-label={label} className="fixed inset-0 z-50 flex bg-ink">
+        <div role="dialog" aria-modal="true" aria-label={label} className="photo-viewer-dialog fixed inset-0 z-50 flex bg-ink">
           <div className="flex min-h-0 w-full flex-col lg:flex-row">
             <div className="relative flex min-h-0 flex-1 flex-col bg-black">
               <div className="absolute left-3 top-3 z-10 flex gap-2">
@@ -223,13 +229,14 @@ export function PhotoViewerModal() {
                           contentStyle={{ width: "100%", height: "100%" }}
                         >
                           <img
-                            className="h-full max-h-full w-full max-w-full object-contain"
+                            className="photo-viewer-main-image h-full max-h-full w-full max-w-full object-contain"
                             src={displayUrl}
                             alt={photo.title}
                             width={photo.width}
                             height={photo.height}
                             loading="eager"
                             decoding="async"
+                            style={transitionStyle}
                           />
                         </TransformComponent>
                       </>

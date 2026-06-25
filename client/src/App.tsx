@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation, useParams, type Location } from "react-router-dom";
 import { ErrorBoundary } from "./components/Common/ErrorBoundary";
 import { Footer } from "./components/Common/Footer";
@@ -32,6 +32,9 @@ export default function App() {
   const location = useLocation();
   const state = location.state as { backgroundLocation?: Location } | null;
   const backgroundLocation = state?.backgroundLocation;
+  const routeLocation = backgroundLocation || location;
+  const routeContentRef = useRef<HTMLDivElement>(null);
+  const isHomeRoute = routeLocation.pathname === "/";
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -43,70 +46,93 @@ export default function App() {
     }
   }, [hydrateFromToken, token, user]);
 
+  useEffect(() => {
+    const routeContent = routeContentRef.current;
+
+    if (!routeContent) {
+      return undefined;
+    }
+
+    if (backgroundLocation) {
+      routeContent.setAttribute("inert", "");
+      routeContent.setAttribute("aria-hidden", "true");
+    } else {
+      routeContent.removeAttribute("inert");
+      routeContent.removeAttribute("aria-hidden");
+    }
+
+    return () => {
+      routeContent.removeAttribute("inert");
+      routeContent.removeAttribute("aria-hidden");
+    };
+  }, [backgroundLocation]);
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-transparent text-ink">
         <Header />
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:px-8">
-          <Sidebar />
+        <div className={`mx-auto flex w-full flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:px-8 ${isHomeRoute ? "max-w-[90rem]" : "max-w-7xl"}`}>
+          {isHomeRoute ? null : <Sidebar />}
           <main id="main-content" className="min-w-0 flex-1" tabIndex={-1}>
             {isLoading ? (
               <LoadingSpinner />
             ) : (
               <>
-                <Routes location={backgroundLocation || location}>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/explore" element={<Explore />} />
-                  <Route path="/photos/:photoId" element={<PhotoDetail />} />
-                  <Route path="/search" element={<Search />} />
-                  <Route path="/users/:userId" element={<UserPhotosRedirect />} />
-                  <Route path="/users/:userId/photos" element={<UserPhotos />} />
-                  <Route path="/albums/:albumId" element={<AlbumDetail />} />
-                  <Route
-                    path="/upload"
-                    element={
-                      <ProtectedRoute>
-                        <Upload />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/gallery"
-                    element={
-                      <ProtectedRoute>
-                        <Gallery title="My Gallery" />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/albums"
-                    element={
-                      <ProtectedRoute>
-                        <MyAlbums />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/albums/new"
-                    element={
-                      <ProtectedRoute>
-                        <MyAlbums showCreateForm />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/my/photos"
-                    element={
-                      <ProtectedRoute>
-                        <MyPhotos />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/404" element={<NotFound />} />
-                  <Route path="*" element={<Navigate to="/404" replace />} />
-                </Routes>
+                <div ref={routeContentRef}>
+                  <Routes location={routeLocation}>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/explore" element={<Explore />} />
+                    <Route path="/photos/:photoId" element={<PhotoDetail />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/users/:userId" element={<UserPhotosRedirect />} />
+                    <Route path="/users/:userId/photos" element={<UserPhotos />} />
+                    <Route path="/albums/:albumId" element={<AlbumDetail />} />
+                    <Route
+                      path="/upload"
+                      element={
+                        <ProtectedRoute>
+                          <Upload />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/gallery"
+                      element={
+                        <ProtectedRoute>
+                          <Gallery title="My Gallery" />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/albums"
+                      element={
+                        <ProtectedRoute>
+                          <MyAlbums />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/albums/new"
+                      element={
+                        <ProtectedRoute>
+                          <MyAlbums showCreateForm />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/my/photos"
+                      element={
+                        <ProtectedRoute>
+                          <MyPhotos />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/404" element={<NotFound />} />
+                    <Route path="*" element={<Navigate to="/404" replace />} />
+                  </Routes>
+                </div>
                 {backgroundLocation ? (
                   <Routes>
                     <Route path="/photos/:photoId" element={<PhotoViewerModal />} />

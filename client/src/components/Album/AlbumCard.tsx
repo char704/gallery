@@ -25,11 +25,11 @@ export function AlbumCard({ album }: AlbumCardProps) {
   const VisibilityIcon = visibilityDetails[album.visibility].Icon;
 
   return (
-    <article className="overflow-hidden rounded-xl border border-vellum bg-surface shadow-soft transition motion-safe:hover:-translate-y-0.5 hover:shadow-gallery">
-      <Link className="focus-ring block aspect-[4/3] bg-mist" to={`/albums/${album.id}`} aria-label={`Open ${album.name}`}>
+    <article className="group overflow-hidden rounded-xl border border-vellum/90 bg-surface/80 transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 hover:bg-surface hover:shadow-soft">
+      <Link className="focus-ring block aspect-[4/3] overflow-hidden bg-mist" to={`/albums/${album.id}`} aria-label={`Open ${album.name}`}>
         {album.coverPhoto ? (
           <img
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition duration-500 motion-safe:group-hover:scale-[1.03]"
             src={album.coverPhoto.thumbnailUrl}
             alt={album.coverPhoto.title}
             loading="lazy"
