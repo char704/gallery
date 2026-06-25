@@ -1,4 +1,4 @@
-import { Eye, Heart, Lock, MessageCircle } from "lucide-react";
+import { Eye, Heart, Link2, Lock, MessageCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import type { Photo, Tag } from "../../types";
 import { cloudinary } from "../../utils/cloudinary";
@@ -6,12 +6,15 @@ import { cloudinary } from "../../utils/cloudinary";
 interface PhotoCardProps {
   photo: Photo;
   layout?: "grid" | "masonry";
+  presentation?: "default" | "explore";
 }
 
-export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
+export function PhotoCard({ photo, layout = "grid", presentation = "default" }: PhotoCardProps) {
   const location = useLocation();
-  const VisibilityIcon = photo.visibility === "PUBLIC" ? Eye : Lock;
+  const VisibilityIcon = photo.visibility === "PUBLIC" ? Eye : photo.visibility === "UNLISTED" ? Link2 : Lock;
   const isMasonry = layout === "masonry";
+  const isExplorePresentation = presentation === "explore";
+  const visibilityLabel = photo.visibility.toLowerCase();
   const displayUrl =
     cloudinary.url(photo.publicId, {
       secure: true,
@@ -43,21 +46,35 @@ export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
           height={photo.height}
           loading="lazy"
         />
-        <span className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent opacity-85 transition duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
+        <span className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/25 to-transparent opacity-90 transition duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
       </Link>
-      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg border border-white/30 bg-white/25 px-2 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur-md">
+      <span
+        className={[
+          "absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold capitalize text-white shadow-sm backdrop-blur-md",
+          isExplorePresentation ? "border border-white/35 bg-ink/70" : "border border-white/30 bg-white/25"
+        ].join(" ")}
+      >
         <VisibilityIcon size={13} />
-        {photo.visibility.toLowerCase()}
+        {visibilityLabel}
       </span>
       <div className="absolute inset-x-0 bottom-0 space-y-3 p-3 opacity-100 transition duration-300 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
-        <div className="rounded-xl border border-white/30 bg-white/20 p-3 text-white shadow-soft backdrop-blur-xl">
-          <Link
-            className="focus-ring block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light"
-            to={`/photos/${photo.id}`}
-            state={{ backgroundLocation: location }}
-          >
-            {photo.title}
-          </Link>
+        <div
+          className={[
+            "p-3 text-white shadow-soft",
+            isExplorePresentation ? "rounded-lg bg-ink/68 backdrop-blur-md" : "rounded-xl border border-white/30 bg-white/20 backdrop-blur-xl"
+          ].join(" ")}
+        >
+          {isExplorePresentation ? (
+            <div className="font-display text-xl font-bold leading-snug">{photo.title}</div>
+          ) : (
+            <Link
+              className="focus-ring block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light"
+              to={`/photos/${photo.id}`}
+              state={{ backgroundLocation: location }}
+            >
+              {photo.title}
+            </Link>
+          )}
           {photo.description ? <p className="mt-1 line-clamp-2 text-sm leading-5 text-white/80">{photo.description}</p> : null}
           {photo.user ? (
             <Link className="focus-ring mt-2 inline-flex rounded text-sm font-semibold text-white/85 hover:text-white" to={`/users/${photo.user.id}/photos`}>
@@ -66,17 +83,32 @@ export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-lg border border-white/30 bg-white/20 px-2 py-1 text-xs font-semibold text-white backdrop-blur-md">
+          <span
+            className={[
+              "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold backdrop-blur-md",
+              isExplorePresentation ? "bg-ink/58 text-white/90" : "border border-white/30 bg-white/20 text-white"
+            ].join(" ")}
+            aria-label={`${photo._count?.likes ?? 0} likes`}
+          >
             <Heart size={13} />
             {photo._count?.likes ?? 0}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-lg border border-white/30 bg-white/20 px-2 py-1 text-xs font-semibold text-white backdrop-blur-md">
+          <span
+            className={[
+              "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold backdrop-blur-md",
+              isExplorePresentation ? "bg-ink/58 text-white/90" : "border border-white/30 bg-white/20 text-white"
+            ].join(" ")}
+            aria-label={`${photo._count?.comments ?? 0} comments`}
+          >
             <MessageCircle size={13} />
             {photo._count?.comments ?? 0}
           </span>
           {tags.slice(0, 2).map((tag) => (
             <Link
-              className="focus-ring rounded-lg border border-white/30 bg-white/20 px-2 py-1 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/30"
+              className={[
+                "focus-ring rounded-lg px-2 py-1 text-xs font-semibold backdrop-blur-md transition",
+                isExplorePresentation ? "bg-ink/58 text-white/90 hover:bg-ink/75" : "border border-white/30 bg-white/20 text-white hover:bg-white/30"
+              ].join(" ")}
               key={tag.id}
               to={`/explore?tag=${encodeURIComponent(tag.slug)}`}
             >
@@ -84,7 +116,12 @@ export function PhotoCard({ photo, layout = "grid" }: PhotoCardProps) {
             </Link>
           ))}
           {tags.length > 2 ? (
-            <span className="rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/75 backdrop-blur-md">
+            <span
+              className={[
+                "rounded-lg px-2 py-1 text-xs font-semibold text-white/75 backdrop-blur-md",
+                isExplorePresentation ? "bg-ink/45" : "border border-white/20 bg-white/10"
+              ].join(" ")}
+            >
               +{tags.length - 2}
             </span>
           ) : null}

@@ -6,6 +6,7 @@ import { PhotoCard } from "./PhotoCard";
 export interface PhotoGridProps {
   photos: Photo[];
   layout?: "grid" | "masonry";
+  photoCardPresentation?: "default" | "explore";
   isLoading?: boolean;
   isError?: boolean;
   error?: Error | null;
@@ -16,6 +17,7 @@ export interface PhotoGridProps {
 export function PhotoGrid({
   photos,
   layout = "grid",
+  photoCardPresentation = "default",
   isLoading = false,
   isError = false,
   error = null,
@@ -23,7 +25,12 @@ export function PhotoGrid({
   emptyMessage = "No photos match this view."
 }: PhotoGridProps) {
   if (isLoading) {
-    return <SkeletonGrid layout={layout} />;
+    return (
+      <section role="status" aria-label="Loading photos">
+        <span className="sr-only">Loading photos</span>
+        <SkeletonGrid layout={layout} />
+      </section>
+    );
   }
 
   if (isError) {
@@ -53,7 +60,7 @@ export function PhotoGrid({
             key={photo.id}
             style={{ "--stagger-index": index } as CSSProperties}
           >
-            <PhotoCard photo={photo} layout="masonry" />
+            <PhotoCard photo={photo} layout="masonry" presentation={photoCardPresentation} />
           </div>
         ))}
       </div>
@@ -64,7 +71,7 @@ export function PhotoGrid({
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {photos.map((photo, index) => (
         <div className="stagger-item" key={photo.id} style={{ "--stagger-index": index } as CSSProperties}>
-          <PhotoCard photo={photo} />
+          <PhotoCard photo={photo} presentation={photoCardPresentation} />
         </div>
       ))}
     </div>

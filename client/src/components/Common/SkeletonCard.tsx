@@ -11,19 +11,19 @@ export function SkeletonCard({ layout = "grid", index = 0 }: SkeletonCardProps) 
 
   return (
     <div className="overflow-hidden rounded-xl bg-surface/80 shadow-soft">
-      <div className={`${imageShape} animate-pulse bg-vellum`} />
+      <div className={`${imageShape} bg-vellum motion-safe:animate-pulse`} />
       <div className="space-y-3 p-4">
-        <div className="h-4 w-3/4 animate-pulse rounded bg-vellum" />
-        <div className="h-3 w-1/2 animate-pulse rounded bg-vellum" />
+        <div className="h-4 w-3/4 rounded bg-vellum motion-safe:animate-pulse" />
+        <div className="h-3 w-1/2 rounded bg-vellum motion-safe:animate-pulse" />
         <div className="flex gap-2">
-          <div className="h-6 w-16 animate-pulse rounded-lg bg-vellum" />
-          <div className="h-6 w-16 animate-pulse rounded-lg bg-vellum" />
+          <div className="h-6 w-16 rounded-lg bg-vellum motion-safe:animate-pulse" />
+          <div className="h-6 w-16 rounded-lg bg-vellum motion-safe:animate-pulse" />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="h-3 animate-pulse rounded bg-vellum" />
-          <div className="h-3 animate-pulse rounded bg-vellum" />
-          <div className="h-3 animate-pulse rounded bg-vellum" />
-          <div className="h-3 animate-pulse rounded bg-vellum" />
+          <div className="h-3 rounded bg-vellum motion-safe:animate-pulse" />
+          <div className="h-3 rounded bg-vellum motion-safe:animate-pulse" />
+          <div className="h-3 rounded bg-vellum motion-safe:animate-pulse" />
+          <div className="h-3 rounded bg-vellum motion-safe:animate-pulse" />
         </div>
       </div>
     </div>
@@ -39,7 +39,7 @@ export function SkeletonGrid({ count = 12, layout = "grid" }: { count?: number; 
 
   if (layout === "masonry") {
     return (
-      <div className="masonry-grid">
+      <div className="masonry-grid" aria-hidden="true">
         {skeletons.map((skeleton, index) => (
           <div className="masonry-item" key={index}>
             {skeleton}
@@ -49,5 +49,5 @@ export function SkeletonGrid({ count = 12, layout = "grid" }: { count?: number; 
     );
   }
 
-  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{skeletons}</div>;
+  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-hidden="true">{skeletons}</div>;
 }

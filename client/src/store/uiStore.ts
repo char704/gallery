@@ -7,7 +7,7 @@ interface UiStore {
 }
 
 export const useUiStore = create<UiStore>((set) => ({
-  isSidebarOpen: true,
+  isSidebarOpen: false,
   setSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen }))
 }));
