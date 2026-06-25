@@ -1,5 +1,5 @@
 import { Camera, Menu, Search, Upload } from "lucide-react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { useUiStore } from "../../store/uiStore";
 import { APP_NAME } from "../../utils/constants";
@@ -13,9 +13,11 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export function Header() {
   const isSidebarOpen = useUiStore((state) => state.isSidebarOpen);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+  const { pathname } = useLocation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const clearSession = useAuthStore((state) => state.clearSession);
+  const isHomeRoute = pathname === "/";
 
   function handleLogout() {
     clearSession();
@@ -32,16 +34,18 @@ export function Header() {
       </a>
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <button
-            className="focus-ring rounded-lg border border-vellum bg-white/70 p-2 text-ink-soft transition hover:bg-surface hover:text-ink motion-reduce:transition-none lg:hidden"
-            type="button"
-            onClick={toggleSidebar}
-            aria-label="Toggle section navigation"
-            aria-controls="section-navigation"
-            aria-expanded={isSidebarOpen}
-          >
-            <Menu size={18} aria-hidden="true" />
-          </button>
+          {isHomeRoute ? null : (
+            <button
+              className="focus-ring rounded-lg border border-vellum bg-white/70 p-2 text-ink-soft transition hover:bg-surface hover:text-ink motion-reduce:transition-none lg:hidden"
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Toggle section navigation"
+              aria-controls="section-navigation"
+              aria-expanded={isSidebarOpen}
+            >
+              <Menu size={18} aria-hidden="true" />
+            </button>
+          )}
           <Link className="focus-ring flex items-center gap-2 rounded-lg" to="/">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-ink text-white shadow-soft">
               <Camera size={20} aria-hidden="true" />

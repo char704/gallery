@@ -1,5 +1,8 @@
 import { Eye, Heart, Link2, Lock, MessageCircle } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import type { CSSProperties, MouseEvent } from "react";
+import { flushSync } from "react-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { visualFeatures } from "../../config/visualFeatures";
 import type { Photo, Tag } from "../../types";
 import { cloudinary } from "../../utils/cloudinary";
 
@@ -9,12 +12,23 @@ interface PhotoCardProps {
   presentation?: "default" | "explore";
 }
 
+type DocumentWithViewTransition = Document & {
+  startViewTransition?: (callback: () => void) => void;
+};
+
 export function PhotoCard({ photo, layout = "grid", presentation = "default" }: PhotoCardProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const VisibilityIcon = photo.visibility === "PUBLIC" ? Eye : photo.visibility === "UNLISTED" ? Link2 : Lock;
   const isMasonry = layout === "masonry";
   const isExplorePresentation = presentation === "explore";
   const visibilityLabel = photo.visibility.toLowerCase();
+  const photoPath = `/photos/${photo.id}`;
+  const isActiveModalPhoto = location.pathname === photoPath;
+  const transitionName = visualFeatures.sharedPhotoTransition && !isActiveModalPhoto ? `photo-${photo.id}` : undefined;
+  const transitionStyle = transitionName
+    ? ({ viewTransitionName: transitionName } as CSSProperties & { viewTransitionName?: string })
+    : undefined;
   const displayUrl =
     cloudinary.url(photo.publicId, {
       secure: true,
@@ -30,13 +44,46 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
   const tags =
     photo.tags?.map((photoTag) => ("tag" in photoTag ? photoTag.tag : (photoTag as unknown as Tag))) ?? [];
 
+  function handlePhotoOpen(event: MouseEvent<HTMLAnchorElement>) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      !visualFeatures.sharedPhotoTransition
+    ) {
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const startViewTransition = (document as DocumentWithViewTransition).startViewTransition;
+
+    if (prefersReducedMotion || !startViewTransition) {
+      return;
+    }
+
+    event.preventDefault();
+    startViewTransition(() => {
+      flushSync(() => {
+        navigate(photoPath, {
+          state: {
+            backgroundLocation: location
+          }
+        });
+      });
+    });
+  }
+
   return (
-    <article className="group relative overflow-hidden rounded-xl bg-ink shadow-soft transition duration-300 motion-safe:hover:-translate-y-0.5 hover:shadow-gallery">
+    <article className="group relative overflow-hidden rounded-xl bg-ink shadow-soft transition duration-300 motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 hover:shadow-gallery">
       <Link
         className={`focus-ring block w-full overflow-hidden ${isMasonry ? "" : "aspect-[4/3]"}`}
         to={`/photos/${photo.id}`}
         state={{ backgroundLocation: location }}
         aria-label={`Open ${photo.title}`}
+        onClick={handlePhotoOpen}
       >
         <img
           className={`${isMasonry ? "h-auto" : "h-full"} w-full object-cover transition duration-500 motion-safe:group-hover:scale-105`}
@@ -45,8 +92,9 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
           width={photo.width}
           height={photo.height}
           loading="lazy"
+          style={transitionStyle}
         />
-        <span className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/25 to-transparent opacity-90 transition duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
+        <span className="absolute inset-0 bg-gradient-to-t from-ink/82 via-ink/10 to-transparent opacity-75 transition duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100" />
       </Link>
       <span
         className={[
@@ -57,11 +105,11 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
         <VisibilityIcon size={13} />
         {visibilityLabel}
       </span>
-      <div className="absolute inset-x-0 bottom-0 space-y-3 p-3 opacity-100 transition duration-300 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
+      <div className="absolute inset-x-0 bottom-0 space-y-2 p-3 opacity-100 transition duration-300 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
         <div
           className={[
-            "p-3 text-white shadow-soft",
-            isExplorePresentation ? "rounded-lg bg-ink/68 backdrop-blur-md" : "rounded-xl border border-white/30 bg-white/20 backdrop-blur-xl"
+            "p-3 text-white",
+            isExplorePresentation ? "rounded-lg bg-ink/54 backdrop-blur-sm" : "rounded-xl border border-white/30 bg-white/20 shadow-soft backdrop-blur-xl"
           ].join(" ")}
         >
           {isExplorePresentation ? (
@@ -71,6 +119,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
               className="focus-ring block rounded-lg font-display text-xl font-bold leading-snug hover:text-marigold-light"
               to={`/photos/${photo.id}`}
               state={{ backgroundLocation: location }}
+              onClick={handlePhotoOpen}
             >
               {photo.title}
             </Link>
@@ -86,7 +135,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
           <span
             className={[
               "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold backdrop-blur-md",
-              isExplorePresentation ? "bg-ink/58 text-white/90" : "border border-white/30 bg-white/20 text-white"
+              isExplorePresentation ? "bg-ink/48 text-white/90" : "border border-white/30 bg-white/20 text-white"
             ].join(" ")}
             aria-label={`${photo._count?.likes ?? 0} likes`}
           >
@@ -96,7 +145,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
           <span
             className={[
               "inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold backdrop-blur-md",
-              isExplorePresentation ? "bg-ink/58 text-white/90" : "border border-white/30 bg-white/20 text-white"
+              isExplorePresentation ? "bg-ink/48 text-white/90" : "border border-white/30 bg-white/20 text-white"
             ].join(" ")}
             aria-label={`${photo._count?.comments ?? 0} comments`}
           >
@@ -107,7 +156,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
             <Link
               className={[
                 "focus-ring rounded-lg px-2 py-1 text-xs font-semibold backdrop-blur-md transition",
-                isExplorePresentation ? "bg-ink/58 text-white/90 hover:bg-ink/75" : "border border-white/30 bg-white/20 text-white hover:bg-white/30"
+                isExplorePresentation ? "bg-ink/48 text-white/90 hover:bg-ink/70" : "border border-white/30 bg-white/20 text-white hover:bg-white/30"
               ].join(" ")}
               key={tag.id}
               to={`/explore?tag=${encodeURIComponent(tag.slug)}`}
@@ -119,7 +168,7 @@ export function PhotoCard({ photo, layout = "grid", presentation = "default" }: 
             <span
               className={[
                 "rounded-lg px-2 py-1 text-xs font-semibold text-white/75 backdrop-blur-md",
-                isExplorePresentation ? "bg-ink/45" : "border border-white/20 bg-white/10"
+                isExplorePresentation ? "bg-ink/40" : "border border-white/20 bg-white/10"
               ].join(" ")}
             >
               +{tags.length - 2}

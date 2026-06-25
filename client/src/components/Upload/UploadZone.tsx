@@ -140,8 +140,8 @@ export function UploadZone() {
         </h2>
         <label
           className={[
-            "focus-within:ring-pine flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-surface px-5 py-8 text-center shadow-soft ring-2 ring-transparent ring-offset-2 ring-offset-canvas transition",
-            isDragging ? "border-pine bg-pine-light" : "border-vellum hover:border-pine"
+            "focus-within:ring-pine flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed bg-surface/85 px-5 py-8 text-center ring-2 ring-transparent ring-offset-2 ring-offset-canvas transition duration-200 motion-safe:active:scale-[0.995]",
+            isDragging ? "border-pine bg-pine-light" : "border-vellum hover:border-pine hover:bg-surface"
           ].join(" ")}
           htmlFor={fileInputId}
           onDrop={(event) => {
@@ -166,7 +166,7 @@ export function UploadZone() {
               <span className="mt-1 text-sm text-ink-muted">{ACCEPTED_LABEL}</span>
             </>
           )}
-          <span className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-vellum bg-surface px-3 py-2 text-sm font-semibold text-ink-soft transition">
+          <span className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-vellum bg-surface px-3 py-2 text-sm font-semibold text-ink-soft transition hover:border-lagoon hover:text-lagoon-dark">
             <ImagePlus size={16} />
             Browse files
           </span>
@@ -206,7 +206,7 @@ export function UploadZone() {
         )}
       </section>
 
-      <section className="space-y-4 rounded-xl border border-vellum bg-surface p-4 shadow-soft sm:p-5" aria-labelledby="upload-details-heading">
+      <section className="space-y-4 rounded-xl border border-vellum bg-surface/80 p-4 sm:p-5" aria-labelledby="upload-details-heading">
         <div>
           <h2 id="upload-details-heading" className="text-xl font-bold text-ink">
             Photo details
@@ -247,7 +247,7 @@ export function UploadZone() {
               <label
                 className={[
                   "flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition",
-                  selectedVisibility === value ? "border-pine bg-pine-light text-pine-dark" : "border-vellum bg-surface text-ink-soft hover:border-lagoon"
+                  selectedVisibility === value ? "border-pine bg-pine-light text-pine-dark" : "border-vellum bg-surface/80 text-ink-soft hover:border-lagoon hover:bg-surface"
                 ].join(" ")}
                 key={value}
               >
@@ -269,7 +269,7 @@ export function UploadZone() {
         ) : null}
 
         <button
-          className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-pine px-5 py-2 font-semibold text-white transition hover:bg-pine-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-pine px-5 py-2 font-semibold text-white transition hover:bg-pine-dark motion-safe:active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           type="submit"
           disabled={!selectedFile || isSubmitting}
         >
